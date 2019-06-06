@@ -15,6 +15,9 @@ def deleteSolver(solver):
 	solver.exit()
 
 def initVars(numVars):
+	global vars
+	
+	vars = []
 	for i in range(numVars):
 		vars.append(Symbol("w{:d}".format(i + 1)))
 
@@ -49,4 +52,4 @@ def solve(solver):
 	return solver.solve()
 
 def get_model(solver):
-	return [solver.get_value(v) for v in vars]
+	return [i if solver.get_value(vars[i - 1]).is_true() else -i for i in range(1, len(vars) + 1)]
