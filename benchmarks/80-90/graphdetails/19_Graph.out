@@ -1,0 +1,16 @@
+SENSORS
+	1_sensor: x = 142.0 y = 125.0 scope = 92
+	2_sensor: x = 64.0 y = 29.0 scope = 120
+	3_sensor: x = 122.0 y = 95.0 scope = 120
+	4_sensor: x = 103.0 y = 52.0 scope = 120
+	5_sensor: x = 59.0 y = 73.0 scope = 92
+	6_sensor: x = 22.0 y = 118.0 scope = 120
+	7_sensor: x = 125.0 y = 96.0 scope = 109
+	8_sensor: x = 72.0 y = 47.0 scope = 120
+	9_sensor: x = 39.0 y = 69.0 scope = 75
+	10_sensor: x = 43.0 y = 107.0 scope = 120
+POINTS:
+	1_point: x = 78 y = 138
+	2_point: x = 31 y = 83
+	3_point: x = 113 y = 139
+	4_point: x = 107 y = 91
