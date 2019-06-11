@@ -284,6 +284,8 @@ class SATResult():
 		self.model = model
 
 def runSolver(solver, getModel, resultQueue, processes, processIndex):
+	import multiprocessing
+
 	card = cardSmt if isinstance(solver, smtSolverBase) else cardSat
 
 	isSAT = card.solve(solver)
@@ -328,8 +330,9 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 		processes.put(process2.pid)
 
 	process1.join()
-	process2.terminate()
-
+	if process2 is not None and process2.is_alive():
+		process2.terminate()
+	
 	cardSat.deleteSolver(satSolver)
 	cardSmt.deleteSolver(smtSolver)
 
