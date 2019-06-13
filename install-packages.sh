@@ -1,5 +1,6 @@
 sudo apt install zlib1g zlib1g-dev
 sudo pip install parse
+pip install pathos
 sudo pip install python-sat
 sudo pip install pysmt
 

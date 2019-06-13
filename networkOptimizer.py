@@ -282,61 +282,44 @@ class SATResult():
 	def __init__(self, isSAT, model = None):
 		self.isSAT = isSAT
 		self.model = model
+	
+def runSolver((solver, numVars, cardinalityEnc, lifetime, getModel)):
+	module = cardSmt if (solver in smtSolvers) else cardSat
 
-def runSolver(solver, getModel, resultQueue, processes, processIndex):
-	import multiprocessing
+	if module == cardSat:
+		solver = cardSat.initSolver(satSolver = solver, numVars = numVars, cardinalityEnc = cardinalityEnc)
+	else:
+		solver = cardSmt.initSolver(smtSolver = solver, numVars = numVars)
 
-	card = cardSmt if isinstance(solver, smtSolverBase) else cardSat
+	EncodeWSNtoSAT(lifetime = lifetime, solver = solver)
 
-	isSAT = card.solve(solver)
+	isSAT = module.solve(solver)
 	if isSAT == None:
 		return
 
 	result = SATResult(isSAT)
 	if isSAT and getModel:
-		result.model = card.get_model(solver)
-	resultQueue.put(result)
-
-	try:
-		i = 0
-		while not processes.empty():
-			if i != processIndex:
-				os.kill(processes.get(), signal.SIGTERM)
-			i += 1
-	except:
-		pass
+		result.model = module.get_model(solver)
+	
+	module.deleteSolver(solver)
+	
+	return result
 
 def DetermineSATOrUNSAT(lifetime, getModel = False):
-	import multiprocessing
-	import multiprocessing.queues
+	from pathos.multiprocessing import ProcessPool
 
 	numVars = GetSensorVar(len(sensors) - 1, lifetime - 1)
 
-	satSolver = cardSat.initSolver(satSolver = sat_solver, numVars = numVars, cardinalityEnc = card_enc)
-	smtSolver = cardSmt.initSolver(smtSolver = smt_solver, numVars = numVars)
-
-	EncodeWSNtoSAT(lifetime = lifetime, solver = satSolver)
-	EncodeWSNtoSAT(lifetime = lifetime, solver = smtSolver)
-
-	resultQueue = multiprocessing.queues.SimpleQueue()
-	processes = multiprocessing.queues.SimpleQueue()
-	process1 = multiprocessing.Process(target = runSolver, args = (satSolver, getModel, resultQueue, processes, 0))
-	process2 = multiprocessing.Process(target = runSolver, args = (smtSolver, getModel, resultQueue, processes, 1))
-
-	process1.start()
-	processes.put(process1.pid)
-	if resultQueue.empty():
-		process2.start()
-		processes.put(process2.pid)
-
-	process1.join()
-	if process2 is not None and process2.is_alive():
-		process2.terminate()
+	# wait for one of the solvers to finish
+	pool = ProcessPool(processes = 2)
+	result = pool.uimap(runSolver, [
+		(sat_solver, numVars, card_enc, lifetime, getModel),
+		(smt_solver, numVars, None, lifetime, getModel),
+		]).next()
+	pool.terminate()
+	pool.clear()
 	
-	cardSat.deleteSolver(satSolver)
-	cardSmt.deleteSolver(smtSolver)
-
-	return resultQueue.get()
+	return result
 
 def EncodeWSNtoSAT(lifetime, solver):
 	card = cardSmt if isinstance(solver, smtSolverBase) else cardSat
