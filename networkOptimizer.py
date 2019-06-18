@@ -311,7 +311,7 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 	numVars = GetSensorVar(len(sensors) - 1, lifetime - 1)
 
 	# wait for one of the solvers to finish
-	pool = ProcessPool(processes = 2)
+	pool = ProcessPool(processes = 2, timeout = timeout)
 	result = pool.uimap(runSolver, [
 		(sat_solver, numVars, card_enc, lifetime, getModel),
 		(smt_solver, numVars, None, lifetime, getModel),
@@ -410,6 +410,9 @@ parser.add_argument("--log",
 				action="store", dest="loglevel", default = "ERROR",
 				choices = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
 				help="logging level")
+parser.add_argument("--timeout",
+				action="store", type = int, dest="timeout", default = 0,
+				help="timeout for child processes")
 
 args = parser.parse_args()
 
@@ -446,6 +449,7 @@ smt_solver = next(s for s in list(smtSolvers) if s.value == args.smt_solver)
 card_enc = next(e for e in list(CardEncType) if e.name == args.card_enc)
 
 logging.basicConfig(stream = stdout, level = getattr(logging, args.loglevel.upper()))
+timeout = args.timeout
 
 # outputDir = CreateDirName(bool_evasive_constraint, bool_movingtarget_constraint)
 # if not os.path.exists(outputDir): os.makedirs(outputDir)
