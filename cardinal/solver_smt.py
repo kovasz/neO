@@ -22,15 +22,21 @@ def initVars(numVars):
 		vars.append(Symbol("w{:d}".format(i + 1)))
 
 def boolToInt(lit):
-	expr = Ite(
+	return Ite(
 		vars[abs(lit) - 1],
-		Int(1),
-		Int(0)
-	)
-	if lit < 0:
-		return Minus(Int(0), expr)
-	else:
-		return expr
+		Int(1 if lit > 0 else 0),
+		Int(0 if lit > 0 else 1)
+	)  
+
+	# expr = Ite(
+	# 	vars[abs(lit) - 1],
+	# 	Int(1),
+	# 	Int(0)
+	# )
+	# if lit < 0:
+	# 	return Minus(Int(0), expr)
+	# else:
+	# 	return expr
 
 def atmost(lits, bound, solver):
 	solver.add_assertion(

@@ -2,6 +2,11 @@
 
 Sensor network optimizer by portfolio SAT+SMT solving
 
+
+To execute as Python script: python networkOptimizer.py --help
+To compile into executable: python setup.py build
+
+
 See the COPYING file for license and copying information.
 
 In particular, this version uses GPL. 

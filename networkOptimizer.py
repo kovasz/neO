@@ -8,7 +8,7 @@ import os
 import signal
 from parse import search
 from time import time
-from sys import stdout
+from sys import stdout, exit
 from math import pow, sqrt
 import numpy
 import logging
@@ -38,7 +38,7 @@ class Target:
 		return "({:d},{:d}): covering sensors = {}".format(int(self.x), int(self.y), self.converingSensorIndices)
 
 def GetInputFileName(fileIndex):
-    return inputDir + '/' + str(fileIndex) + '_Graph.out'
+	return inputDir + '/' + str(fileIndex) + '_Graph.out'
 
 class SearchAlgorithms(Enum):
 	Linear = 'linear'
@@ -46,23 +46,23 @@ class SearchAlgorithms(Enum):
 	Binary = 'binary'
 
 def GetOutputDirName(outputDir, solver):
-    if bool_evasive_constraint == True:
-        if  bool_movingtarget_constraint == True:
-            outputDir += 'allon/'
-        else:
-            outputDir += 'moving_off/'
-    else:
-        if bool_movingtarget_constraint == True:
-            outputDir += 'evasive_off/'
-        else:
-            outputDir += 'evasive_moving_off/'
-    
-    outputDir += solver.name
+	if bool_evasive_constraint == True:
+		if  bool_movingtarget_constraint == True:
+			outputDir += 'allon/'
+		else:
+			outputDir += 'moving_off/'
+	else:
+		if bool_movingtarget_constraint == True:
+			outputDir += 'evasive_off/'
+		else:
+			outputDir += 'evasive_moving_off/'
 
-    return outputDir
+	outputDir += solver.name
+
+	return outputDir
 
 def GetOutputFileName(fileIndex, solver):
-    return GetOutputDirName(outputDir, solver) + '/' + str(fileIndex) + '.out'
+	return GetOutputDirName(outputDir, solver) + '/' + str(fileIndex) + '.out'
 
 def GetInputData(fileIndex):
 	with open(GetInputFileName(fileIndex)) as inputFile:
@@ -283,7 +283,9 @@ class SATResult():
 		self.isSAT = isSAT
 		self.model = model
 	
-def runSolver((solver, numVars, cardinalityEnc, lifetime, getModel)):
+def runSolver(args):
+	(solver, numVars, cardinalityEnc, lifetime, getModel) = args
+
 	module = cardSmt if (solver in smtSolvers) else cardSat
 
 	if module == cardSat:
@@ -459,29 +461,29 @@ timeout = args.timeout
 #region Warn if evasive and movingtarget are set incorrectly
 
 if bool_evasive_constraint and limit_ON < 1:
-    print "ERROR: evasive must be >= 1"
-    exit()
+	logging.error("evasive must be >= 1")
+	exit()
 if bool_movingtarget_constraint and limit_crit_ON < 1:
-	print "ERROR: movingtarget must be >= 1"
+	logging.error("movingtarget must be >= 1")
 	exit()
 if bool_evasive_constraint and bool_movingtarget_constraint and limit_crit_ON >= limit_ON:
-	print "ERROR: movingtarget must be < evasive"
+	logging.error("movingtarget must be < evasive")
 	exit()
 
 #endregion
 
 if fileIndex is None:
-    list_of_files = glob.glob(inputDir + '/*.out')                            # * means all if need specific format then *.csv
-    number_of_files = len(list_of_files)
-    if number_of_files == 0:
-        print "There's no file to work from."
-        exit()
-    fileIndex = 0
+	list_of_files = glob.glob(inputDir + '/*.out')                            # * means all if need specific format then *.csv
+	number_of_files = len(list_of_files)
+	if number_of_files == 0:
+		logging.error("There's no file to work from.")
+		exit()
+	fileIndex = 0
 else:
-    if not os.path.isfile(GetInputFileName(fileIndex)):
-        print "There's no graph found at the index of " + str(fileIndex)
-        exit()
-    number_of_files = 1
+	if not os.path.isfile(GetInputFileName(fileIndex)):
+		logging.error("There's no graph found at the index of " + str(fileIndex))
+		exit()
+	number_of_files = 1
 
 
 done = 0
@@ -493,12 +495,12 @@ while(done < number_of_files):
 		InitNetworkModel(fileIndex)
 
 		if not DetermineSATOrUNSAT(lifetime = 1).isSAT:
-			print "UNSAT"
+			print("UNSAT")
 		else:
-			print "SAT"
-			print "OPTIMUM: {:d}".format(Optimize())
+			print("SAT")
+			print("OPTIMUM: {:d}".format(Optimize()))
 
-		print "ELAPSED TIME = ", time() - startTime
+		print("ELAPSED TIME = ", time() - startTime)
 
 		done += 1
 	fileIndex += 1

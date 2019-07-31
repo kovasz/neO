@@ -17,7 +17,6 @@ def initSolver(satSolver, numVars, cardinalityEnc  = None):
 	cntVars = numVars
 	cardEnc = cardinalityEnc
 	return satSolverClasses[satSolver]()
-	# return Solver(name = satSolver.value)
 
 def deleteSolver(solver):
 	solver.delete()
