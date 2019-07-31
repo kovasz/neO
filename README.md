@@ -4,6 +4,7 @@ Sensor network optimizer by portfolio SAT+SMT solving
 
 
 To execute as Python script: python networkOptimizer.py --help
+
 To compile into executable: python setup.py build
 
 
