@@ -116,7 +116,7 @@ def InitNetworkModel(fileIndex):
 	GetInputData(fileIndex)
 
 	if bool_movingtarget_constraint:
-		for i in range(0, len(targets) / 2):
+		for i in range(0, int(len(targets) / 2)):
 			critical_points.append(targets[i])
 
 def Optimize():
@@ -229,7 +229,7 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 				return i - 1
 			
 			minimumUNSAT = min(i, minimumUNSAT)
-			i = (maximumSAT + i) / 2
+			i = (int(maximumSAT + i) / 2)
 			continue
 
 		if minimumUNSAT == i + 1:
