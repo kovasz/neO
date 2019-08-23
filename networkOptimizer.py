@@ -37,35 +37,13 @@ class Target:
 	def __str__(self):
 		return "({:d},{:d}): covering sensors = {}".format(int(self.x), int(self.y), self.converingSensorIndices)
 
-def GetInputFileName(fileIndex):
-	return inputDir + '/' + str(fileIndex) + '_Graph.out'
-
 class SearchAlgorithms(Enum):
 	Linear = 'linear'
 	RegressionLinear = 'reglinear'
 	Binary = 'binary'
 
-def GetOutputDirName(outputDir, solver):
-	if bool_evasive_constraint == True:
-		if  bool_movingtarget_constraint == True:
-			outputDir += 'allon/'
-		else:
-			outputDir += 'moving_off/'
-	else:
-		if bool_movingtarget_constraint == True:
-			outputDir += 'evasive_off/'
-		else:
-			outputDir += 'evasive_moving_off/'
-
-	outputDir += solver.name
-
-	return outputDir
-
-def GetOutputFileName(fileIndex, solver):
-	return GetOutputDirName(outputDir, solver) + '/' + str(fileIndex) + '.out'
-
-def GetInputData(fileIndex):
-	with open(GetInputFileName(fileIndex)) as inputFile:
+def GetInputData(inputFile):
+	with open(inputFile) as inputFile:
 		for line in inputFile:
 			r = search("{}_sensor: x = {x:f} y = {y:f} scope = {scope:d}", line)
 			if r is not None:
@@ -108,27 +86,18 @@ def SensorCoversCriticalPoint(sensorIndex):
 			return True
 	return False
 
-def InitNetworkModel(fileIndex):
+def InitNetworkModel(inputFile):
 	del sensors[:]
 	del targets[:]
 	del critical_points[:]
 
-	GetInputData(fileIndex)
+	GetInputData(inputFile)
 
 	if bool_movingtarget_constraint:
 		for i in range(0, int(len(targets) / 2)):
 			critical_points.append(targets[i])
 
 def Optimize():
-	# outputFile = GetOutputFileName(j, solver)
-		
-	# if os.path.isfile(outputFile): 
-	# 	print "There is already a result file " + outputFile
-	# 	print "Are you sure to overwrite? [y/n]"
-	# 	answer = raw_input()
-	# 	if answer.upper() == "N":
-	# 		exit()
-
 	maxLifetime = sum(s.lifetime for s in sensors) / nmr_covering
 
 	if search_algorithm == SearchAlgorithms.Binary:
@@ -279,19 +248,20 @@ SAT = True
 UNSAT = False
 
 class SATResult():
-	def __init__(self, isSAT, model = None):
+	def __init__(self, solverType, isSAT, model = None):
+		self.solverType = solverType
 		self.isSAT = isSAT
 		self.model = model
 	
 def runSolver(args):
-	(solver, numVars, cardinalityEnc, lifetime, getModel) = args
+	(solverType, numVars, cardinalityEnc, lifetime, getModel) = args
 
-	module = cardSmt if (solver in smtSolvers) else cardSat
+	module = cardSmt if (solverType in smtSolvers) else cardSat
 
 	if module == cardSat:
-		solver = cardSat.initSolver(satSolver = solver, numVars = numVars, cardinalityEnc = cardinalityEnc)
+		solver = cardSat.initSolver(satSolver = solverType, numVars = numVars, cardinalityEnc = cardinalityEnc)
 	else:
-		solver = cardSmt.initSolver(smtSolver = solver, numVars = numVars)
+		solver = cardSmt.initSolver(smtSolver = solverType, numVars = numVars)
 
 	EncodeWSNtoSAT(lifetime = lifetime, solver = solver)
 
@@ -299,7 +269,7 @@ def runSolver(args):
 	if isSAT == None:
 		return
 
-	result = SATResult(isSAT)
+	result = SATResult(solverType, isSAT)
 	if isSAT and getModel:
 		result.model = module.get_model(solver)
 	
@@ -320,6 +290,8 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 		]).next()
 	pool.terminate()
 	pool.clear()
+
+	print("Result provided by: {}".format(result.solverType))
 	
 	return result
 
@@ -371,15 +343,8 @@ def GetSensorVar(sensorIndex, time):
 
 parser = argparse.ArgumentParser("Generate optimal lifetime for sensor network by SAT and SMT solvers")
 
-parser.add_argument("-i", "--inputdir",
-				action="store", dest="inputDir", default=".",
-				help="the name of the input directory that contains the network files")
-parser.add_argument("-o", "--outputdir",
-				action="store", dest="outputDir", default=".",
-				help="the name of the output directory to save the result files into")
-parser.add_argument("-f", "--fileindex",
-				action="store", type=int, dest="fileIndex",
-				help="the index of the network file")
+parser.add_argument("input_file", help="the input network file")
+
 parser.add_argument("-g", "--getmodel",
 				action="store_true", dest="bool_get_model", default = False,
 				help="getting model enabled")
@@ -401,7 +366,7 @@ parser.add_argument("--sat-solver",
 				choices = [s.value for s in list(satSolvers)],
 				help="the name of the SAT solver")
 parser.add_argument("--smt-solver",
-				action="store", dest="smt_solver", default = "msat",
+				action="store", dest="smt_solver", default = "z3",
 				choices = [s.value for s in list(smtSolvers)],
 				help="the name of the SMT solver")
 parser.add_argument("--card-enc",
@@ -431,10 +396,7 @@ critical_points = []
 #region Init constants and variables ---------------------------------------------------------------------
 
 numberOfIterations = 1
-fileIndex = args.fileIndex
-inputDir = args.inputDir
-outputDir = args.outputDir
-# solver = SATSolvers[options.solverName]
+inputFile = args.input_file
 bool_get_model = args.bool_get_model
 nmr_covering = args.nmr_covering                                            #number of sensor's that should cover a point
 limit_ON = args.limit_ON                                                    #max time while one sensor can be switched on
@@ -453,9 +415,6 @@ card_enc = next(e for e in list(CardEncType) if e.name == args.card_enc)
 logging.basicConfig(stream = stdout, level = getattr(logging, args.loglevel.upper()))
 timeout = args.timeout
 
-# outputDir = CreateDirName(bool_evasive_constraint, bool_movingtarget_constraint)
-# if not os.path.exists(outputDir): os.makedirs(outputDir)
-
 #endregion
 
 #region Warn if evasive and movingtarget are set incorrectly
@@ -472,35 +431,18 @@ if bool_evasive_constraint and bool_movingtarget_constraint and limit_crit_ON >=
 
 #endregion
 
-if fileIndex is None:
-	list_of_files = glob.glob(inputDir + '/*.out')                            # * means all if need specific format then *.csv
-	number_of_files = len(list_of_files)
-	if number_of_files == 0:
-		logging.error("There's no file to work from.")
-		exit()
-	fileIndex = 0
+if not os.path.isfile(inputFile):
+	logging.error("There's no graph found at the index of " + str(fileIndex))
+	exit()
+
+startTime = time()
+
+InitNetworkModel(inputFile)
+
+if not DetermineSATOrUNSAT(lifetime = 1).isSAT:
+	print("UNSAT")
 else:
-	if not os.path.isfile(GetInputFileName(fileIndex)):
-		logging.error("There's no graph found at the index of " + str(fileIndex))
-		exit()
-	number_of_files = 1
+	print("SAT")
+	print("OPTIMUM: {:d}".format(Optimize()))
 
-
-done = 0
-while(done < number_of_files):
-	inputFile = GetInputFileName(fileIndex)
-	if os.path.isfile(inputFile):
-		startTime = time()
-
-		InitNetworkModel(fileIndex)
-
-		if not DetermineSATOrUNSAT(lifetime = 1).isSAT:
-			print("UNSAT")
-		else:
-			print("SAT")
-			print("OPTIMUM: {:d}".format(Optimize()))
-
-		print("ELAPSED TIME = ", time() - startTime)
-
-		done += 1
-	fileIndex += 1
+print("ELAPSED TIME = ", time() - startTime)
