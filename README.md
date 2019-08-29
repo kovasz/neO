@@ -1,11 +1,11 @@
-# networkOptimizer 1.0
+# neO 1.1
 
 Sensor network optimizer by portfolio SAT+SMT solving
 
 
-To execute as Python script: python networkOptimizer.py --help
+To execute as Python script: python neO.py --help
 
-To compile into executable: python setup.py build
+To statically compile into an executable: build.sh
 
 
 See the COPYING file for license and copying information.

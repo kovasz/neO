@@ -432,7 +432,7 @@ if bool_evasive_constraint and bool_movingtarget_constraint and limit_crit_ON >=
 #endregion
 
 if not os.path.isfile(inputFile):
-	logging.error("There's no graph found at the index of " + str(fileIndex))
+	logging.error("Input file {} does not exist".format(inputFile))
 	exit()
 
 startTime = time()
