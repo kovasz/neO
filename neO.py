@@ -5,7 +5,7 @@ import argparse
 from enum import Enum
 import glob
 import os
-import signal
+# import signal
 from parse import search
 from time import time
 from sys import stdout, exit
@@ -13,10 +13,10 @@ from math import pow, sqrt
 import numpy
 import logging
 
-from cardinal.card_enc_type import CardEncType
-from cardinal.solvers import satSolverBase, satSolvers, smtSolverBase, smtSolvers
-import cardinal.solver_sat as cardSat
-import cardinal.solver_smt as cardSmt
+from solvers.card_enc_type import CardEncType, Relations, RelationOps
+from solvers.solver import SolverResult
+from solvers.solver_sat import SatSolver, SatSolvers
+from solvers.solver_smt import SmtSolver, SmtSolvers
 
 class Sensor:
 	def __init__(self, x, y, scope):
@@ -100,12 +100,15 @@ def InitNetworkModel(inputFile):
 def Optimize():
 	maxLifetime = sum(s.lifetime for s in sensors) / nmr_covering
 
-	if search_algorithm == SearchAlgorithms.Binary:
-		return SearchOptimumBinary(lowerbound = 1, upperbound = maxLifetime, solvedMap = {})
-	elif search_algorithm == SearchAlgorithms.Linear:
-		return SearchOptimumLinear(lowerbound = 1)
-	else:
-		return SearchOptimumRegLinear(lowerbound = 1, upperbound = maxLifetime)
+	try:
+		if search_algorithm == SearchAlgorithms.Binary:
+			return SearchOptimumBinary(lowerbound = 1, upperbound = maxLifetime, solvedMap = {})
+		elif search_algorithm == SearchAlgorithms.Linear:
+			return SearchOptimumLinear(lowerbound = 1)
+		else:
+			return SearchOptimumRegLinear(lowerbound = 1, upperbound = maxLifetime)
+	except:
+		return None
 
 def SearchOptimumBinary(lowerbound, upperbound, solvedMap):
 	while(True):
@@ -113,14 +116,14 @@ def SearchOptimumBinary(lowerbound, upperbound, solvedMap):
 		# print '[' + str(lowerbound) + ',' + str(upperbound) + '] -> ' + str(i)
 		logging.info("i = {:d}".format(i))
 
-		SATResult = DetermineSATOrUNSAT(lifetime = i)
-		solvedMap[i] = SATResult.isSAT
+		SolverResult = DetermineSATOrUNSAT(lifetime = i)
+		solvedMap[i] = SolverResult.isSAT
 		
 		logging.info("elapsed time = {:f}".format(time() - startTime))
 		logging.info(sorted(solvedMap.items()))
 		stdout.flush()
 		
-		if not SATResult.isSAT:
+		if not SolverResult.isSAT:
 			upperbound = i - 1
 		else:
 			lowerbound = i + 1   
@@ -132,14 +135,14 @@ def SearchOptimumBinary(lowerbound, upperbound, solvedMap):
 		if solvedMap.get(lowerbound) == None:
 			logging.info("i = {:d}".format(lowerbound))
 
-			SATResult = DetermineSATOrUNSAT(lifetime = lowerbound)
-			solvedMap[lowerbound] = SATResult.isSAT
+			SolverResult = DetermineSATOrUNSAT(lifetime = lowerbound)
+			solvedMap[lowerbound] = SolverResult.isSAT
 
 			logging.info("elapsed time = {:f}".format(time() - startTime))
 			logging.info(sorted(solvedMap.items()))
 			stdout.flush()
 		
-			if SATResult.isSAT:
+			if SolverResult.isSAT:
 				return lowerbound
 			
 		return lowerbound - 1           
@@ -243,86 +246,94 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 
 def GetResource(model, lifetime):
 	return sum(s.lifetime for s in sensors) - sum(1 if lit > 0 else 0 for lit in model)
-
-SAT = True
-UNSAT = False
-
-class SATResult():
-	def __init__(self, solverType, isSAT, model = None):
-		self.solverType = solverType
-		self.isSAT = isSAT
-		self.model = model
 	
 def runSolver(args):
 	(solverType, numVars, cardinalityEnc, lifetime, getModel) = args
 
-	module = cardSmt if (solverType in smtSolvers) else cardSat
+	if solverType in SatSolvers:
+		solver = SatSolver(satSolverType = solverType, cardinalityEnc = cardinalityEnc, dumpFileName = dump_file)
+	elif solverType in SmtSolvers:
+		solver = SmtSolver(smtSolverType = solverType, dumpFileName = dump_file)
 
-	if module == cardSat:
-		solver = cardSat.initSolver(satSolver = solverType, numVars = numVars, cardinalityEnc = cardinalityEnc)
-	else:
-		solver = cardSmt.initSolver(smtSolver = solverType, numVars = numVars)
+	schedulingVars = solver.generateVars(numVars)
 
+	logging.info("{} starts encoding WSN...".format(solverType))
 	EncodeWSNtoSAT(lifetime = lifetime, solver = solver)
 
-	isSAT = module.solve(solver)
+	logging.info("{} starts solving...".format(solverType))
+	isSAT = solver.solve()
 	if isSAT == None:
 		return
 
-	result = SATResult(solverType, isSAT)
+	result = SolverResult(solverType, isSAT)
 	if isSAT and getModel:
-		result.model = module.get_model(solver)
-	
-	module.deleteSolver(solver)
+		result.model = solver.get_model(schedulingVars)
+
+	del solver
 	
 	return result
 
 def DetermineSATOrUNSAT(lifetime, getModel = False):
 	from pathos.multiprocessing import ProcessPool
+	from multiprocess.context import TimeoutError
 
 	numVars = GetSensorVar(len(sensors) - 1, lifetime - 1)
 
 	# wait for one of the solvers to finish
-	pool = ProcessPool(processes = 2, timeout = timeout)
-	result = pool.uimap(runSolver, [
-		(sat_solver, numVars, card_enc, lifetime, getModel),
-		(smt_solver, numVars, None, lifetime, getModel),
-		]).next()
-	pool.terminate()
-	pool.clear()
+	solverConfigs = []
+	if satSolverType:
+		solverConfigs.append((satSolverType, numVars, cardEnc, lifetime, getModel))
+	if smtSolverType:
+		solverConfigs.append((smtSolverType, numVars, None, lifetime, getModel))
 
-	print("Result provided by: {}".format(result.solverType))
+	to = int(startTime + timeout - time())
+	pool = ProcessPool(len(solverConfigs), timeout = to)
+	
+	result = None
+	try: 
+		result = pool.uimap(runSolver, solverConfigs).next(timeout = to)
+	except TimeoutError:
+		print("TIMEOUT")
+	else:
+		logging.info("Result provided by: {}".format(result.solverType))
+		if result.isSAT:
+			logging.info("SAT")
+			if getModel:
+				print("Model for scheduling vars: {}".format(result.model))
+		else:
+			logging.info("UNSAT")
+	finally:
+		pool.terminate()
+		pool.clear()
 	
 	return result
 
 def EncodeWSNtoSAT(lifetime, solver):
-	card = cardSmt if isinstance(solver, smtSolverBase) else cardSat
-
 	if bool_lifetime_constraint:
 		for sensorIndex in range(len(sensors)):
-			card.atmost(
+			solver.addConstraint(
 				lits = [GetSensorVar(sensorIndex, time) for time in range(lifetime)],
-				bound = sensors[sensorIndex].lifetime,
-				solver = solver
+				relation = Relations.LessOrEqual,
+				bound = sensors[sensorIndex].lifetime
 			)
 
 	if bool_coverage_constraint:
 		for time in range(lifetime):
 			for target in targets:
-				card.atleast(
+				solver.addConstraint(
 					lits = [GetSensorVar(sensorIndex, time) for sensorIndex in target.converingSensorIndices],
-					bound = nmr_covering,
-					solver = solver
+					relation = Relations.GreaterOrEqual,
+					bound = nmr_covering
 				)
 	
 	if bool_evasive_constraint:
 		for sensorIndex in range(len(sensors)):
 			for time in range(lifetime - limit_ON):
-				card.atmost(
+				solver.addConstraint(
 					lits = [GetSensorVar(sensorIndex, time + h) for h in range(limit_ON + 1)],
-					bound = limit_ON,
-					solver = solver
-			)
+					relation = Relations.LessOrEqual,
+					bound = limit_ON
+				)
 
 	if bool_movingtarget_constraint:
 		for sensorIndex in range(len(sensors)):
@@ -330,11 +341,11 @@ def EncodeWSNtoSAT(lifetime, solver):
 				continue
 			
 			for time in range(lifetime - limit_crit_ON):
-				card.atmost(
+				solver.addConstraint(
 					lits = [GetSensorVar(sensorIndex, time + h) for h in range(limit_crit_ON + 1)],
-					bound = limit_crit_ON,
-					solver = solver
-			)
+					relation = Relations.LessOrEqual,
+					bound = limit_crit_ON
+				)
 
 def GetSensorVar(sensorIndex, time):
 	return time * len(sensors) + sensorIndex + 1
@@ -362,24 +373,27 @@ parser.add_argument("-a", "--algorithm",
 				choices = ["linear", "reglinear", "binary"],
 				help="which search algorithm to apply")
 parser.add_argument("--sat-solver",
-				action="store", dest="sat_solver", default = "minicard",
-				choices = [s.value for s in list(satSolvers)],
-				help="the name of the SAT solver")
+				action="store", dest="sat_solver", default = "minicard", type = str.lower,
+				choices = [s.value for s in list(SatSolvers)] + ["none"],
+				help="the name of the SAT solver (default: minicard)")
 parser.add_argument("--smt-solver",
-				action="store", dest="smt_solver", default = "z3",
-				choices = [s.value for s in list(smtSolvers)],
-				help="the name of the SMT solver")
+				action="store", dest="smt_solver", default = "z3", type = str.lower,
+				choices = [s.value for s in list(SmtSolvers)] + ["none"],
+				help="the name of the SMT solver (default: z3)")
 parser.add_argument("--card-enc",
-				action="store", dest="card_enc", default = "seqcounter",
-				choices = [e.name for e in list(CardEncType)],
-				help="the name of the cardinality encoding")
+				action="store", dest="card_enc", default = "seqcounter", type = str.lower,
+				choices = [e.name for e in list(CardEncType)] + ["none"],
+				help="the name of the cardinality encoding (default: none)")
+parser.add_argument("--dump-file",
+				action="store", dest="dump_file",
+				help="dump the intermediate DIMACS/SMT-LIB/etc. file, if applicable")
 parser.add_argument("--log",
-				action="store", dest="loglevel", default = "ERROR",
+				action="store", dest="loglevel", default = "ERROR", type = str.upper,
 				choices = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-				help="logging level")
+				help="logging level (default: ERROR)")
 parser.add_argument("--timeout",
-				action="store", type = int, dest="timeout", default = 0,
-				help="timeout for child processes")
+				action="store", type = int, dest="timeout", default = None,
+				help="timeout for child processes in seconds")
 
 args = parser.parse_args()
 
@@ -408,11 +422,13 @@ bool_lifetime_constraint = True
 bool_coverage_constraint = True
 
 search_algorithm = next(a for a in list(SearchAlgorithms) if a.value == args.search_algorithm)
-sat_solver = next(s for s in list(satSolvers) if s.value == args.sat_solver)
-smt_solver = next(s for s in list(smtSolvers) if s.value == args.smt_solver)
-card_enc = next(e for e in list(CardEncType) if e.name == args.card_enc)
+satSolverType = next(s for s in list(SatSolvers) if s.value == args.sat_solver) if args.sat_solver != "none" else None
+smtSolverType = next(s for s in list(SmtSolvers) if s.value == args.smt_solver) if args.smt_solver != "none" else None
+cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
 
-logging.basicConfig(stream = stdout, level = getattr(logging, args.loglevel.upper()))
+dump_file = args.dump_file
+
+logging.basicConfig(stream = stdout, level = getattr(logging, args.loglevel))
 timeout = args.timeout
 
 #endregion
@@ -439,10 +455,13 @@ startTime = time()
 
 InitNetworkModel(inputFile)
 
-if not DetermineSATOrUNSAT(lifetime = 1).isSAT:
-	print("UNSAT")
-else:
+if DetermineSATOrUNSAT(lifetime = 1).isSAT:
 	print("SAT")
-	print("OPTIMUM: {:d}".format(Optimize()))
+	print("Starting to search for the optimum...")
+	result = Optimize()
+	if result:
+		print("OPTIMUM: {:d}".format(result))
+else:
+	print("UNSAT")
 
-print("ELAPSED TIME = ", time() - startTime)
+print("ELAPSED TIME = {:f}".format(time() - startTime))
