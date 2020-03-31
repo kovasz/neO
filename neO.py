@@ -118,15 +118,15 @@ def SearchOptimumBinary(lowerbound, upperbound, solvedMap):
 
 		SolverResult = DetermineSATOrUNSAT(lifetime = i)
 		solvedMap[i] = SolverResult.isSAT
-		
+
 		logging.info("elapsed time = {:f}".format(time() - startTime))
 		logging.info(sorted(solvedMap.items()))
 		stdout.flush()
-		
+
 		if not SolverResult.isSAT:
 			upperbound = i - 1
 		else:
-			lowerbound = i + 1   
+			lowerbound = i + 1
 
 		if lowerbound >= upperbound:
 				break
@@ -141,17 +141,17 @@ def SearchOptimumBinary(lowerbound, upperbound, solvedMap):
 			logging.info("elapsed time = {:f}".format(time() - startTime))
 			logging.info(sorted(solvedMap.items()))
 			stdout.flush()
-		
+
 			if SolverResult.isSAT:
 				return lowerbound
-			
-		return lowerbound - 1           
+
+		return lowerbound - 1
 	elif lowerbound > upperbound:
-		return upperbound    
+		return upperbound
 
 def SearchOptimumLinear(lowerbound):
 	solvedMap = {}
-	
+
 	i = lowerbound
 
 	while True:
@@ -163,7 +163,7 @@ def SearchOptimumLinear(lowerbound):
 		logging.info("elapsed time = {:f}".format(time() - startTime))
 		logging.info(sorted(solvedMap.items()))
 		stdout.flush()
-		
+
 		if not SATResult.isSAT:
 			return i - 1
 
@@ -173,10 +173,10 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 	x = []
 	y = []
 	solvedMap = {}
-	
+
 	maximumSAT = lowerbound
 	minimumUNSAT = upperbound
-	
+
 	i = lowerbound
 
 	while True:
@@ -195,11 +195,11 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 		logging.info("elapsed time = {:f}".format(time() - startTime))
 		logging.info(sorted(solvedMap.items()))
 		stdout.flush()
-		
+
 		if not SATResult.isSAT:
 			if maximumSAT == i - 1:
 				return i - 1
-			
+
 			minimumUNSAT = min(i, minimumUNSAT)
 			i = (int(maximumSAT + i) / 2)
 			continue
@@ -210,7 +210,7 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 
 		resource = GetResource(model = SATResult.model, lifetime = i)
 		logging.info("resource = {:d}".format(resource))
-		
+
 		x.append(i)
 		y.append(resource)
 
@@ -219,7 +219,7 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 			continue
 
 		try:
-			# Fit a polynomial of certain degree    
+			# Fit a polynomial of certain degree
 			regression = numpy.polyfit(x, y, RegressionDegree)
 			# Get the root of the polynomial
 			p = numpy.roots(regression)
@@ -232,21 +232,21 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 			logging.info("Cannot apply regression")
 			i += 2
 			continue
-			
+
 		#hops
-		if i < intersec * 0.6: 
+		if i < intersec * 0.6:
 			i += max(2, int((intersec - i) * 0.8))
 		elif i < intersec * 0.8:
 			i += max(2, int((intersec - i) * 0.5))
 		else:
 			i += 2
-		
+
 		logging.info("intersec: {:f} -> {:d}".format(intersec, i))
-		stdout.flush()     
+		stdout.flush()
 
 def GetResource(model, lifetime):
 	return sum(s.lifetime for s in sensors) - sum(1 if lit > 0 else 0 for lit in model)
-	
+
 def runSolver(args):
 	(solverType, numVars, cardinalityEnc, lifetime, getModel) = args
 
@@ -270,7 +270,7 @@ def runSolver(args):
 		result.model = solver.get_model(schedulingVars)
 
 	del solver
-	
+
 	return result
 
 def DetermineSATOrUNSAT(lifetime, getModel = False):
@@ -288,9 +288,9 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 
 	to = int(startTime + timeout - time())
 	pool = ProcessPool(len(solverConfigs), timeout = to)
-	
+
 	result = None
-	try: 
+	try:
 		result = pool.uimap(runSolver, solverConfigs).next(timeout = to)
 	except TimeoutError:
 		print("TIMEOUT")
@@ -305,7 +305,7 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 	finally:
 		pool.terminate()
 		pool.clear()
-	
+
 	return result
 
 def EncodeWSNtoSAT(lifetime, solver):
@@ -325,7 +325,7 @@ def EncodeWSNtoSAT(lifetime, solver):
 					relation = Relations.GreaterOrEqual,
 					bound = nmr_covering
 				)
-	
+
 	if bool_evasive_constraint:
 		for sensorIndex in range(len(sensors)):
 			for time in range(lifetime - limit_ON):
@@ -339,7 +339,7 @@ def EncodeWSNtoSAT(lifetime, solver):
 		for sensorIndex in range(len(sensors)):
 			if not SensorCoversCriticalPoint(sensorIndex):
 				continue
-			
+
 			for time in range(lifetime - limit_crit_ON):
 				solver.addConstraint(
 					lits = [GetSensorVar(sensorIndex, time + h) for h in range(limit_crit_ON + 1)],
@@ -403,7 +403,7 @@ args = parser.parse_args()
 
 sensors = []
 targets = []
-critical_points = [] 
+critical_points = []
 
 #endregion
 
