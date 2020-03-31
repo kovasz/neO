@@ -282,7 +282,8 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 	# wait for one of the solvers to finish
 	solverConfigs = []
 	if satSolverType:
-		solverConfigs.append((satSolverType, numVars, cardEnc, lifetime, getModel))
+		for solverType in satSolverType:
+			solverConfigs.append((solverType, numVars, cardEnc, lifetime, getModel))
 	if smtSolverType:
 		solverConfigs.append((smtSolverType, numVars, None, lifetime, getModel))
 
@@ -373,9 +374,9 @@ parser.add_argument("-a", "--algorithm",
 				choices = ["linear", "reglinear", "binary"],
 				help="which search algorithm to apply")
 parser.add_argument("--sat-solver",
-				action="store", dest="sat_solver", default = "minicard", type = str.lower,
+				action="store", nargs='+', dest="sat_solver", default = ['minicard'], type = str.lower,
 				choices = [s.value for s in list(SatSolvers)] + ["none"],
-				help="the name of the SAT solver (default: minicard)")
+				help="the name of the SAT solvers (default: minicard)")
 parser.add_argument("--smt-solver",
 				action="store", dest="smt_solver", default = "z3", type = str.lower,
 				choices = [s.value for s in list(SmtSolvers)] + ["none"],
@@ -422,7 +423,14 @@ bool_lifetime_constraint = True
 bool_coverage_constraint = True
 
 search_algorithm = next(a for a in list(SearchAlgorithms) if a.value == args.search_algorithm)
-satSolverType = next(s for s in list(SatSolvers) if s.value == args.sat_solver) if args.sat_solver != "none" else None
+
+satSolverType = None
+if args.sat_solver[0] != "none":
+	satSolverType = []
+	for args_solver in args.sat_solver:
+		if args_solver == "none": continue
+		satSolverType.append(next(s for s in list(SatSolvers) if s.value == args_solver))
+
 smtSolverType = next(s for s in list(SmtSolvers) if s.value == args.smt_solver) if args.smt_solver != "none" else None
 cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
 
