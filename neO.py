@@ -424,12 +424,9 @@ bool_coverage_constraint = True
 
 search_algorithm = next(a for a in list(SearchAlgorithms) if a.value == args.search_algorithm)
 
-satSolverType = None
-if args.sat_solver[0] != "none":
-	satSolverType = []
-	for args_solver in args.sat_solver:
-		if args_solver == "none": continue
-		satSolverType.append(next(s for s in list(SatSolvers) if s.value == args_solver))
+satSolverType = []
+for args_solver in args.sat_solver:
+	if args_solver != "none": satSolverType.append(next(s for s in list(SatSolvers) if s.value == args_solver))
 
 smtSolverType = next(s for s in list(SmtSolvers) if s.value == args.smt_solver) if args.smt_solver != "none" else None
 cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
