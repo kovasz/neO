@@ -288,7 +288,7 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 		for solverType in smtSolverType:
 			solverConfigs.append((solverType, numVars, None, lifetime, getModel))
 
-	to = int(startTime + timeout - time())
+	to = int(startTime + timeout - time()) if timeout else None
 	pool = ProcessPool(len(solverConfigs), timeout = to)
 
 	result = None
