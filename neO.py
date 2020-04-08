@@ -285,7 +285,8 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 		for solverType in satSolverType:
 			solverConfigs.append((solverType, numVars, cardEnc, lifetime, getModel))
 	if smtSolverType:
-		solverConfigs.append((smtSolverType, numVars, None, lifetime, getModel))
+		for solverType in smtSolverType:
+			solverConfigs.append((solverType, numVars, None, lifetime, getModel))
 
 	to = int(startTime + timeout - time())
 	pool = ProcessPool(len(solverConfigs), timeout = to)
@@ -378,9 +379,9 @@ parser.add_argument("--sat-solver",
 				choices = [s.value for s in list(SatSolvers)] + ["none"],
 				help="the name of the SAT solvers (default: minicard)")
 parser.add_argument("--smt-solver",
-				action="store", dest="smt_solver", default = "z3", type = str.lower,
+				action="store", nargs='+', dest="smt_solver", default = ['z3'], type = str.lower,
 				choices = [s.value for s in list(SmtSolvers)] + ["none"],
-				help="the name of the SMT solver (default: z3)")
+				help="the name of the SMT solvers (default: z3)")
 parser.add_argument("--card-enc",
 				action="store", dest="card_enc", default = "seqcounter", type = str.lower,
 				choices = [e.name for e in list(CardEncType)] + ["none"],
@@ -428,7 +429,10 @@ satSolverType = []
 for args_solver in args.sat_solver:
 	if args_solver != "none": satSolverType.append(next(s for s in list(SatSolvers) if s.value == args_solver))
 
-smtSolverType = next(s for s in list(SmtSolvers) if s.value == args.smt_solver) if args.smt_solver != "none" else None
+smtSolverType = []
+for args_solver in args.smt_solver:
+	if args_solver != "none": smtSolverType.append(next(s for s in list(SmtSolvers) if s.value == args_solver))
+
 cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
 
 dump_file = args.dump_file
