@@ -9,7 +9,7 @@ import os
 from parse import search
 from time import time
 from sys import stdout, exit
-from math import pow, sqrt
+from math import pow, sqrt, ceil
 import numpy
 import logging
 
@@ -98,7 +98,8 @@ def InitNetworkModel(inputFile):
 			critical_points.append(targets[i])
 
 def Optimize():
-	maxLifetime = sum(s.lifetime for s in sensors) / nmr_covering
+	maxLifetime = ceil(sum(s.lifetime for s in sensors) / nmr_covering)
+	# maxLifetime = sum(s.lifetime for s in sensors)
 
 	try:
 		if search_algorithm == SearchAlgorithms.Binary:
