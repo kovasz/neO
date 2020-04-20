@@ -1,0 +1,112 @@
+SENSORS
+	1_sensor: x = 112.0 y = 121.0 scope = 109
+	2_sensor: x = 179.0 y = 25.0 scope = 75
+	3_sensor: x = 137.0 y = 35.0 scope = 92
+	4_sensor: x = 110.0 y = 80.0 scope = 58
+	5_sensor: x = 171.0 y = 14.0 scope = 120
+	6_sensor: x = 29.0 y = 71.0 scope = 75
+	7_sensor: x = 77.0 y = 60.0 scope = 41
+	8_sensor: x = 162.0 y = 125.0 scope = 58
+	9_sensor: x = 102.0 y = 136.0 scope = 41
+	10_sensor: x = 67.0 y = 70.0 scope = 120
+	11_sensor: x = 97.0 y = 131.0 scope = 120
+	12_sensor: x = 51.0 y = 76.0 scope = 25
+	13_sensor: x = 60.0 y = 42.0 scope = 25
+	14_sensor: x = 102.0 y = 107.0 scope = 75
+	15_sensor: x = 120.0 y = 41.0 scope = 92
+	16_sensor: x = 194.0 y = 139.0 scope = 58
+	17_sensor: x = 98.0 y = 31.0 scope = 41
+	18_sensor: x = 103.0 y = 96.0 scope = 120
+	19_sensor: x = 81.0 y = 84.0 scope = 92
+	20_sensor: x = 170.0 y = 152.0 scope = 120
+	21_sensor: x = 191.0 y = 22.0 scope = 75
+	22_sensor: x = 157.0 y = 94.0 scope = 109
+	23_sensor: x = 146.0 y = 31.0 scope = 58
+	24_sensor: x = 54.0 y = 158.0 scope = 109
+	25_sensor: x = 128.0 y = 76.0 scope = 109
+	26_sensor: x = 28.0 y = 41.0 scope = 109
+	27_sensor: x = 25.0 y = 18.0 scope = 92
+	28_sensor: x = 151.0 y = 103.0 scope = 92
+	29_sensor: x = 56.0 y = 145.0 scope = 41
+	30_sensor: x = 190.0 y = 35.0 scope = 75
+	31_sensor: x = 177.0 y = 80.0 scope = 75
+	32_sensor: x = 76.0 y = 85.0 scope = 41
+	33_sensor: x = 30.0 y = 132.0 scope = 41
+	34_sensor: x = 174.0 y = 170.0 scope = 120
+	35_sensor: x = 37.0 y = 11.0 scope = 75
+	36_sensor: x = 158.0 y = 172.0 scope = 120
+	37_sensor: x = 111.0 y = 112.0 scope = 58
+	38_sensor: x = 115.0 y = 71.0 scope = 120
+	39_sensor: x = 147.0 y = 24.0 scope = 109
+	40_sensor: x = 137.0 y = 162.0 scope = 25
+	41_sensor: x = 81.0 y = 58.0 scope = 92
+	42_sensor: x = 118.0 y = 52.0 scope = 92
+	43_sensor: x = 67.0 y = 41.0 scope = 92
+	44_sensor: x = 136.0 y = 136.0 scope = 25
+	45_sensor: x = 117.0 y = 88.0 scope = 109
+	46_sensor: x = 93.0 y = 29.0 scope = 75
+	47_sensor: x = 175.0 y = 91.0 scope = 120
+	48_sensor: x = 67.0 y = 119.0 scope = 120
+	49_sensor: x = 154.0 y = 15.0 scope = 58
+	50_sensor: x = 157.0 y = 58.0 scope = 75
+	51_sensor: x = 157.0 y = 53.0 scope = 109
+	52_sensor: x = 31.0 y = 45.0 scope = 92
+	53_sensor: x = 26.0 y = 55.0 scope = 75
+	54_sensor: x = 58.0 y = 168.0 scope = 120
+	55_sensor: x = 143.0 y = 119.0 scope = 109
+	56_sensor: x = 180.0 y = 92.0 scope = 92
+	57_sensor: x = 117.0 y = 104.0 scope = 41
+	58_sensor: x = 56.0 y = 40.0 scope = 109
+	59_sensor: x = 131.0 y = 102.0 scope = 25
+	60_sensor: x = 130.0 y = 141.0 scope = 75
+	61_sensor: x = 14.0 y = 12.0 scope = 75
+	62_sensor: x = 179.0 y = 133.0 scope = 58
+	63_sensor: x = 112.0 y = 54.0 scope = 41
+	64_sensor: x = 18.0 y = 137.0 scope = 109
+	65_sensor: x = 76.0 y = 174.0 scope = 41
+	66_sensor: x = 127.0 y = 146.0 scope = 41
+	67_sensor: x = 172.0 y = 5.0 scope = 75
+	68_sensor: x = 134.0 y = 72.0 scope = 58
+	69_sensor: x = 141.0 y = 143.0 scope = 41
+	70_sensor: x = 17.0 y = 71.0 scope = 25
+	71_sensor: x = 138.0 y = 127.0 scope = 75
+	72_sensor: x = 53.0 y = 158.0 scope = 41
+	73_sensor: x = 79.0 y = 6.0 scope = 92
+	74_sensor: x = 135.0 y = 97.0 scope = 120
+	75_sensor: x = 128.0 y = 114.0 scope = 109
+	76_sensor: x = 120.0 y = 19.0 scope = 109
+	77_sensor: x = 96.0 y = 66.0 scope = 41
+	78_sensor: x = 89.0 y = 60.0 scope = 109
+	79_sensor: x = 25.0 y = 126.0 scope = 120
+	80_sensor: x = 81.0 y = 24.0 scope = 120
+	81_sensor: x = 63.0 y = 157.0 scope = 41
+	82_sensor: x = 123.0 y = 56.0 scope = 58
+	83_sensor: x = 20.0 y = 97.0 scope = 109
+	84_sensor: x = 92.0 y = 116.0 scope = 92
+	85_sensor: x = 21.0 y = 113.0 scope = 25
+	86_sensor: x = 44.0 y = 144.0 scope = 75
+	87_sensor: x = 31.0 y = 17.0 scope = 25
+	88_sensor: x = 46.0 y = 158.0 scope = 58
+	89_sensor: x = 96.0 y = 86.0 scope = 75
+	90_sensor: x = 52.0 y = 91.0 scope = 41
+	91_sensor: x = 129.0 y = 164.0 scope = 75
+	92_sensor: x = 116.0 y = 187.0 scope = 41
+	93_sensor: x = 12.0 y = 39.0 scope = 58
+	94_sensor: x = 62.0 y = 134.0 scope = 58
+	95_sensor: x = 33.0 y = 30.0 scope = 58
+	96_sensor: x = 86.0 y = 114.0 scope = 58
+	97_sensor: x = 5.0 y = 40.0 scope = 109
+	98_sensor: x = 46.0 y = 172.0 scope = 25
+	99_sensor: x = 126.0 y = 27.0 scope = 109
+	100_sensor: x = 57.0 y = 158.0 scope = 109
+POINTS:
+	1_point: x = 171 y = 80
+	2_point: x = 156 y = 32
+	3_point: x = 135 y = 51
+	4_point: x = 73 y = 99
+	5_point: x = 190 y = 102
+	6_point: x = 119 y = 168
+	7_point: x = 23 y = 118
+	8_point: x = 75 y = 54
+	9_point: x = 76 y = 71
+	10_point: x = 22 y = 102
