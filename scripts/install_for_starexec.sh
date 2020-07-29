@@ -1,6 +1,6 @@
 #!/bin/bash
 
-yum update
+yum -y update
 yum -y install centos-release-scl
 yum -y install epel-release
 
