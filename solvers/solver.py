@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from solvers.card_enc_type import Relations
+
 SAT = True
 UNSAT = False
 
@@ -8,6 +10,35 @@ class SolverResult():
 		self.solverType = solverType
 		self.isSAT = isSAT
 		self.model = model
+
+class Constraint():
+	def __init__(self, lits, weights = None, relation = Relations.GreaterOrEqual, bound = 1, boolLit = None):
+		"""Instatiate a pseudo-Boolean constraint
+
+		Parameters:
+
+		lits -- literals on the LHS of the constraint
+
+		weights -- weights assigned to literals, respectively
+
+		relation -- relational operator
+		
+		bound -- bound on the RHS of the constraint
+
+		boolLit -- Boolean literal that is set to be equivalent with the constraint (undefined by default)
+		"""
+
+		assert(lits is not None)
+		self.lits = lits
+
+		assert(weights is None or (len(weights) == len(lits) and all(w >= 0 for w in weights)))
+		self.weights = weights
+
+		self.relation = relation
+		
+		assert(bound >= 0)
+		self.bound = bound
+		self.boolLit = boolLit
 
 class Solver(object):
 	def generateVars(self, numVars):
@@ -32,16 +63,12 @@ class Solver(object):
 
 		raise NotImplementedError("Please Implement this method")
 
-	def addConstraint(self, lits, relation, bound):
-		"""Add cardinality constraint to the solver
+	def addConstraint(self, constraint):
+		"""Add constraint to the solver
 
 		Parameters:
 
-		lits -- literals on the LHS of the constraint
-
-		relation -- relational operator
-		
-		bound -- bound on the RHS of the constraint
+		constraint -- constraint to add
 		"""
 
 		raise NotImplementedError("Please Implement this method")
