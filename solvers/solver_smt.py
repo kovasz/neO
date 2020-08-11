@@ -117,9 +117,6 @@ class SmtSolver(solvers.solver.Solver):
 		logging.debug("Constraint #{:d}:   {}   {}".format(self.cntConstraints,
 			"{:d}   <=>".format(constraint.boolLit) if constraint.boolLit else "",
 			expr))
-		# logging.debug("Constraint #{:d}:   {}   {} {} {:d}".format(self.cntConstraints,
-		# 	"{:d}   <=>".format(constraint.boolLit) if constraint.boolLit else "",
-		# 	lits, RelationOps[constraint.relation], constraint.bound))
 
 	def solve(self):
 		if self.dumpFile:

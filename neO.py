@@ -24,15 +24,15 @@ class SearchAlgorithms(Enum):
 	Binary = 'binary'
 
 def Optimize(wsnModel):
-	try:
+	# try:
 		if search_algorithm == SearchAlgorithms.Binary:
 			return SearchOptimumBinary(wsnModel, lowerbound = 1, upperbound = wsnModel.GetUpperBound(), solvedMap = {})
 		elif search_algorithm == SearchAlgorithms.Linear:
 			return SearchOptimumLinear(wsnModel, lowerbound = 1)
 		else:
 			return SearchOptimumRegLinear(wsnModel, lowerbound = 1, upperbound = wsnModel.GetUpperBound())
-	except:
-		return None
+	# except:
+	# 	return None
 
 def SearchOptimumBinary(wsnModel, lowerbound, upperbound, solvedMap):
 	while(True):
@@ -132,7 +132,7 @@ def SearchOptimumRegLinear(wsnModel, lowerbound, upperbound, RegressionDegree = 
 			return i
 		maximumSAT = max(i, maximumSAT)
 
-		resource = wsnModel.GetResource(satModel = SATResult.model, lifetime = i)
+		resource = wsnModel.GetResource(schedulingModel = SATResult.model)
 		logging.info("resource = {:d}".format(resource))
 
 		x.append(i)
