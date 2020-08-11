@@ -231,9 +231,6 @@ parser = argparse.ArgumentParser("Generate optimal lifetime for sensor network b
 
 parser.add_argument("input_file", help="the input network file")
 
-parser.add_argument("-g", "--getmodel",
-				action="store_true", dest="bool_get_model", default = False,
-				help="getting model enabled")
 parser.add_argument("-k", "--covering",
 				action="store", type=int, dest="limit_covering", default = 2,
 				help="to specify the number of sensors that should cover a point in a time interval")
@@ -259,6 +256,12 @@ parser.add_argument("--card-enc",
 				action="store", dest="card_enc", default = "seqcounter", type = str.lower,
 				choices = [e.name for e in list(CardEncType)] + ["none"],
 				help="the name of the cardinality encoding (default: none)")
+parser.add_argument("--get-scheduling",
+				action="store_true", dest="bool_get_scheduling", default = False,
+				help="get the scheduling")
+parser.add_argument("--verify-scheduling",
+				action="store_true", dest="bool_verify_scheduling", default = False,
+				help="verify the scheduling")
 parser.add_argument("--dump-file",
 				action="store", dest="dump_file",
 				help="dump the intermediate DIMACS/SMT-LIB/etc. file, if applicable")
@@ -278,10 +281,11 @@ args = parser.parse_args()
 
 numberOfIterations = 1
 inputFile = args.input_file
-bool_get_model = args.bool_get_model
 limit_covering = args.limit_covering
 limit_ON = args.limit_ON
 limit_crit_ON = args.limit_crit_ON
+bool_get_scheduling = args.bool_get_scheduling
+bool_verify_scheduling = args.bool_verify_scheduling
 
 search_algorithm = next(a for a in list(SearchAlgorithms) if a.value == args.search_algorithm)
 
@@ -314,13 +318,19 @@ wsnModel.ReadInputFile(inputFile)
 if DetermineSATOrUNSAT(wsnModel, lifetime = 1).isSAT:
 	print("SAT")
 	print("Starting to search for the optimum...")
-	result = Optimize(wsnModel)
-	if result:
-		print("OPTIMUM: {:d}".format(result))
-		if bool_get_model:
-			result = DetermineSATOrUNSAT(wsnModel, lifetime = result, getModel = True)
-			wsnModel.DisplayScheduling(result.model)
+	optimum = Optimize(wsnModel)
+	if optimum:
+		print("OPTIMUM: {:d}".format(optimum))
+		if bool_get_scheduling or bool_verify_scheduling:
+			result = DetermineSATOrUNSAT(wsnModel, lifetime = optimum, getModel = True)
+			if bool_verify_scheduling:
+				wsnModel.VerifyScheduling(schedulingModel = result.model, lifetime = optimum)
+				print("Scheduling was successfully verified")
+			else:
+				wsnModel.DisplayScheduling(schedulingModel = result.model)
 else:
 	print("UNSAT")
 
 print("ELAPSED TIME = {:f}".format(time() - startTime))
+
+logging.shutdown()
