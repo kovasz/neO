@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from solvers.card_enc_type import Relations
+from solvers.card_enc_type import Relations, RelationOps
 
 SAT = True
 UNSAT = False
@@ -39,6 +39,15 @@ class Constraint():
 		assert(bound >= 0)
 		self.bound = bound
 		self.boolLit = boolLit
+
+	def __str__(self):
+		return "{}{} {} {:d}{}".format(
+			self.lits,
+			" * {}".format(self.weights) if self.weights is not None else "",
+			RelationOps[self.relation],
+			self.bound,
+			"\t <=> {:d}".format(self.boolLit) if self.boolLit else ""
+		)
 
 class Solver(object):
 	def generateVars(self, numVars):

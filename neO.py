@@ -17,6 +17,7 @@ from solvers.card_enc_type import CardEncType, Relations, RelationOps
 from solvers.solver import SolverResult
 from solvers.solver_sat import SatSolver, SatSolvers
 from solvers.solver_smt import SmtSolver, SmtSolvers
+from solvers.solver_mip import MipSolver, MipSolvers
 
 class SearchAlgorithms(Enum):
 	Linear = 'linear'
@@ -27,6 +28,7 @@ def Optimize(wsnModel):
 	# try:
 		if search_algorithm == SearchAlgorithms.Binary:
 			return SearchOptimumBinary(wsnModel, lowerbound = 1, upperbound = wsnModel.GetUpperBound(), solvedMap = {})
+			# return SearchOptimumBinary(wsnModel, lowerbound = 1, upperbound = None, solvedMap = {})
 		elif search_algorithm == SearchAlgorithms.Linear:
 			return SearchOptimumLinear(wsnModel, lowerbound = 1)
 		else:
@@ -35,9 +37,12 @@ def Optimize(wsnModel):
 	# 	return None
 
 def SearchOptimumBinary(wsnModel, lowerbound, upperbound, solvedMap):
+	i = 1
 	while(True):
-		i = int((lowerbound + upperbound) / 2)
-		# print '[' + str(lowerbound) + ',' + str(upperbound) + '] -> ' + str(i)
+		if upperbound:
+			i = int((lowerbound + upperbound) / 2)
+		else:
+			i = i << 1
 		logging.info("i = {:d}".format(i))
 
 		SolverResult = DetermineSATOrUNSAT(wsnModel, lifetime = i)
@@ -52,7 +57,7 @@ def SearchOptimumBinary(wsnModel, lowerbound, upperbound, solvedMap):
 		else:
 			lowerbound = i + 1
 
-		if lowerbound >= upperbound:
+		if upperbound and lowerbound >= upperbound:
 				break
 
 	if lowerbound == upperbound:
@@ -104,8 +109,6 @@ def SearchOptimumRegLinear(wsnModel, lowerbound, upperbound, RegressionDegree = 
 	i = lowerbound
 
 	while True:
-		# print "[{:d},{:d}]".format(maximumSAT, minimumUNSAT)
-
 		if i <= maximumSAT:
 			i = maximumSAT + 1
 		elif i >= minimumUNSAT:
@@ -175,7 +178,9 @@ def runSolver(args):
 		solver = SatSolver(satSolverType = solverType, cardinalityEnc = cardinalityEnc, dumpFileName = dump_file)
 	elif solverType in SmtSolvers:
 		solver = SmtSolver(smtSolverType = solverType, dumpFileName = dump_file)
-
+	elif solverType in MipSolvers:
+		solver = MipSolver(mipSolverType = solverType)
+	
 	logging.info("{} starts encoding WSN...".format(solverType))
 	schedulingVars = wsnModel.EncodeWsnConstraints(lifetime = lifetime, solver = solver)
 
@@ -199,11 +204,11 @@ def DetermineSATOrUNSAT(wsnModel, lifetime, getModel = False):
 	# wait for one of the solvers to finish
 	solverConfigs = []
 	if satSolverType:
-		for solverType in satSolverType:
-			solverConfigs.append((solverType, wsnModel, cardEnc, lifetime, getModel))
+		solverConfigs.extend([(solverType, wsnModel, cardEnc, lifetime, getModel) for solverType in satSolverType])
 	if smtSolverType:
-		for solverType in smtSolverType:
-			solverConfigs.append((solverType, wsnModel, None, lifetime, getModel))
+		solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in smtSolverType])
+	if mipSolverType:
+		solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in mipSolverType])
 
 	to = int(startTime + timeout - time()) if timeout else None
 	pool = ProcessPool(len(solverConfigs), timeout = to)
@@ -245,13 +250,17 @@ parser.add_argument("-a", "--algorithm",
 				choices = ["linear", "reglinear", "binary"],
 				help="which search algorithm to apply")
 parser.add_argument("--sat-solver",
-				action="store", nargs='+', dest="sat_solver", default = ['minicard'], type = str.lower,
+				action="store", nargs='+', dest="sat_solver", default = ["minicard"], type = str.lower,
 				choices = [s.value for s in list(SatSolvers)] + ["none"],
 				help="the name of the SAT solvers (default: minicard)")
 parser.add_argument("--smt-solver",
-				action="store", nargs='+', dest="smt_solver", default = ['z3'], type = str.lower,
+				action="store", nargs='+', dest="smt_solver", default = ["z3"], type = str.lower,
 				choices = [s.value for s in list(SmtSolvers)] + ["none"],
 				help="the name of the SMT solvers (default: z3)")
+parser.add_argument("--mip-solver",
+				action="store", nargs='+', dest="mip_solver", default = ["none"], type = str.lower,
+				choices = [s.value for s in list(MipSolvers)] + ["none"],
+				help="the name of the MIP solver (default: none)")
 parser.add_argument("--card-enc",
 				action="store", dest="card_enc", default = "seqcounter", type = str.lower,
 				choices = [e.name for e in list(CardEncType)] + ["none"],
@@ -279,7 +288,6 @@ args = parser.parse_args()
 
 #region Init constants and variables ---------------------------------------------------------------------
 
-numberOfIterations = 1
 inputFile = args.input_file
 limit_covering = args.limit_covering
 limit_ON = args.limit_ON
@@ -296,6 +304,10 @@ for args_solver in args.sat_solver:
 smtSolverType = []
 for args_solver in args.smt_solver:
 	if args_solver != "none": smtSolverType.append(next(s for s in list(SmtSolvers) if s.value == args_solver))
+
+mipSolverType = []
+for args_solver in args.mip_solver:
+	if args_solver != "none": mipSolverType.append(next(s for s in list(MipSolvers) if s.value == args_solver))
 
 cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
 
