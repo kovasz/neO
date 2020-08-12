@@ -101,15 +101,12 @@ def Optimize():
 	maxLifetime = ceil(sum(s.lifetime for s in sensors) / nmr_covering)
 	# maxLifetime = sum(s.lifetime for s in sensors)
 
-	try:
-		if search_algorithm == SearchAlgorithms.Binary:
-			return SearchOptimumBinary(lowerbound = 1, upperbound = maxLifetime, solvedMap = {})
-		elif search_algorithm == SearchAlgorithms.Linear:
-			return SearchOptimumLinear(lowerbound = 1)
-		else:
-			return SearchOptimumRegLinear(lowerbound = 1, upperbound = maxLifetime)
-	except:
-		return None
+	if search_algorithm == SearchAlgorithms.Binary:
+		return SearchOptimumBinary(lowerbound = 1, upperbound = maxLifetime, solvedMap = {})
+	elif search_algorithm == SearchAlgorithms.Linear:
+		return SearchOptimumLinear(lowerbound = 1)
+	else:
+		return SearchOptimumRegLinear(lowerbound = 1, upperbound = maxLifetime)
 
 def SearchOptimumBinary(lowerbound, upperbound, solvedMap):
 	while(True):
@@ -202,7 +199,7 @@ def SearchOptimumRegLinear(lowerbound, upperbound, RegressionDegree = 10, minPoi
 				return i - 1
 
 			minimumUNSAT = min(i, minimumUNSAT)
-			i = (int(maximumSAT + i) / 2)
+			i = int((maximumSAT + i) / 2)
 			continue
 
 		if minimumUNSAT == i + 1:
@@ -301,8 +298,6 @@ def DetermineSATOrUNSAT(lifetime, getModel = False):
 		logging.info("Result provided by: {}".format(result.solverType))
 		if result.isSAT:
 			logging.info("SAT")
-			if getModel:
-				print("Model for scheduling vars: {}".format(result.model))
 		else:
 			logging.info("UNSAT")
 	finally:

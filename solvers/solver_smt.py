@@ -53,6 +53,8 @@ class SmtSolver(solvers.solver.Solver):
 		if self.dumpFile:
 			for v in self.vars[cntVars:]:
 				self.dumpFile.write("(declare-fun {} () {})".format(v.symbol_name(), v.symbol_type()))
+		
+		return newVars
 
 	def getVar(self, lit):
 		return self.vars[abs(lit) - 1]
