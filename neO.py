@@ -18,6 +18,7 @@ from solvers.solver import SolverResult
 from solvers.solver_sat import SatSolver, SatSolvers
 from solvers.solver_smt import SmtSolver, SmtSolvers
 from solvers.solver_mip import MipSolver, MipSolvers
+from solvers.solver_or import OrSolver, OrSolvers
 
 class SearchAlgorithms(Enum):
 	Linear = 'linear'
@@ -130,7 +131,7 @@ def SearchOptimumRegLinear(wsnModel, lowerbound, upperbound, RegressionDegree = 
 			minimumUNSAT = min(i, minimumUNSAT)
 			i = int((maximumSAT + i) / 2)
 			continue
-		
+
 		if minimumUNSAT == i + 1:
 			return i
 		maximumSAT = max(i, maximumSAT)
@@ -180,7 +181,9 @@ def runSolver(args):
 		solver = SmtSolver(smtSolverType = solverType, dumpFileName = dump_file)
 	elif solverType in MipSolvers:
 		solver = MipSolver(mipSolverType = solverType)
-	
+	elif solverType in OrSolvers:
+		solver = OrSolver(orSolverType = solverType)
+
 	logging.info("{} starts encoding WSN...".format(solverType))
 	schedulingVars = wsnModel.EncodeWsnConstraints(lifetime = lifetime, solver = solver)
 
@@ -209,6 +212,8 @@ def DetermineSATOrUNSAT(wsnModel, lifetime, getModel = False):
 		solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in smtSolverType])
 	if mipSolverType:
 		solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in mipSolverType])
+	if orSolverType:
+		solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in orSolverType])
 
 	to = int(startTime + timeout - time()) if timeout else None
 	pool = ProcessPool(len(solverConfigs), timeout = to)
@@ -258,9 +263,13 @@ parser.add_argument("--smt-solver",
 				choices = [s.value for s in list(SmtSolvers)] + ["none"],
 				help="the name of the SMT solvers (default: z3)")
 parser.add_argument("--mip-solver",
-				action="store", nargs='+', dest="mip_solver", default = ["none"], type = str.lower,
-				choices = [s.value for s in list(MipSolvers)] + ["none"],
-				help="the name of the MIP solver (default: none)")
+                action="store", nargs='+', dest="mip_solver", default = ["none"], type = str.lower,
+                choices = [s.value for s in list(MipSolvers)] + ["none"],
+                help="the name of the MIP solver (default: none)")
+parser.add_argument("--or-solver",
+                action="store", nargs='+', dest="or_solver", default = ["none"], type = str.lower,
+                choices = [s.value for s in list(OrSolvers)] + ["none"],
+                help="the name of the OR solver (default: none)")
 parser.add_argument("--card-enc",
 				action="store", dest="card_enc", default = "seqcounter", type = str.lower,
 				choices = [e.name for e in list(CardEncType)] + ["none"],
@@ -308,6 +317,10 @@ for args_solver in args.smt_solver:
 mipSolverType = []
 for args_solver in args.mip_solver:
 	if args_solver != "none": mipSolverType.append(next(s for s in list(MipSolvers) if s.value == args_solver))
+
+orSolverType = []
+for args_solver in args.or_solver:
+    if args_solver != "none": orSolverType.append(next(s for s in list(OrSolvers) if s.value == args_solver))
 
 cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
 
