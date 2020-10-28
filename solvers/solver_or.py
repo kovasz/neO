@@ -56,7 +56,7 @@ class OrSolver(Solver):
 			return 1 - self.getVar(lit)
 
 	def addClause(self, lits):
-		self.solver.Add(pywraplp.Solver.Sum(self.Solver, (self.getLit(l) for l in lits)) >= 1)
+		self.solver.Add(pywraplp.Solver.Sum(self.solver, (self.getLit(l) for l in lits)) >= 1)
 		
 		self.cntConstraints += 1
 		

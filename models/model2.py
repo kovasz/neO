@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from parse import search
 from math import pow, sqrt, ceil
 import logging
 
@@ -42,29 +41,21 @@ class WsnModel2(WsnModel):
 		super().__init__(limit_covering, limit_ON, limit_crit_ON)
 		self.levels = []
 
-	def ReadInputFile(self, filename):
-		with open(filename) as inputFile:
-			for line in inputFile:
-				r = search("{}_sensor: x = {x:d} y = {y:d} power = {power:d}", line)
-				if r is not None:
-					self.sensors.append(Sensor(r["x"], r["y"], r["power"]))
-				else:
-					r = search("{}_point: x = {x:d} y = {y:d}", line)
-					if r is not None:
-						self.points.append(Point(r["x"], r["y"]))
-					else:
-						r = search("{}_level: power = {power:d} range = {range:d}", line)
-						if r is not None:
-							self.levels.append(Level(r["power"], r["range"]))
+	def ReadInputFile(self, json):
+		for s in json["sensors"]:
+			self.sensors.append(Sensor(s["x"], s["y"], s["power"]))
+
+		for p in json["points"]:
+			self.points.append(Point(p["x"], p["y"]))
+			if p["critical"]:
+				self.critical_points.append(self.points[-1])
+
+		for l in json["levels"]:
+			self.levels.append(Level(l["power"], l["range"]))
+		self.levels = sorted(self.levels, key = lambda level: level.power)
 		
 		if self.sensors is None or self.points is None or self.levels is None:
 			raise Exception("No sensors or target points or performance levels specified")
-
-		# let the 1st half of points be marked as "critical"
-		for i in range(0, int(len(self.points) / 2)):
-			self.critical_points.append(self.points[i])
-		
-		self.levels = sorted(self.levels, key = lambda level: level.power)
 
 	def GetUpperBound(self):
 		return ceil(sum(ceil(s.fullPower / self.levels[0].power) for s in self.sensors) / self.limit_covering)

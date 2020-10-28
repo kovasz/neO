@@ -4,6 +4,7 @@ import argparse
 from enum import Enum
 import glob
 import os
+import json
 from time import time
 from sys import stdout, exit
 from math import pow, sqrt, ceil
@@ -335,10 +336,14 @@ if not os.path.isfile(inputFile):
 	logging.error("Input file {} does not exist".format(inputFile))
 	exit()
 
-startTime = time()
+with open(inputFile) as file:
+	jsonData = json.load(file)
 
-wsnModel = WsnModel2(limit_covering, limit_ON, limit_crit_ON)
-wsnModel.ReadInputFile(inputFile)
+wsnModels = [WsnModel1, WsnModel2]
+wsnModel = wsnModels[jsonData["version"] - 1](limit_covering, limit_ON, limit_crit_ON)
+wsnModel.ReadInputFile(jsonData)
+
+startTime = time()
 
 if DetermineSATOrUNSAT(wsnModel, lifetime = 1).isSAT:
 	print("SAT")

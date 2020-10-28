@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from parse import search
 from math import pow, sqrt, ceil
 import logging
 
@@ -53,23 +52,20 @@ class WsnModel1(WsnModel):
 	def __init__(self, limit_covering, limit_ON, limit_crit_ON):
 		super().__init__(limit_covering, limit_ON, limit_crit_ON)
 
-	def ReadInputFile(self, filename):
-		with open(filename) as inputFile:
-			for line in inputFile:
-				r = search("{}_sensor: x = {x:f} y = {y:f} scope = {scope:d}", line)
-				if r is not None:
-					self.sensors.append(Sensor(int(r["x"]), int(r["y"]), r["scope"]))
-				else:
-					r = search("{}_point: x = {x:d} y = {y:d}", line)
-					if r is not None:
-						self.points.append(Point(r["x"], r["y"]))
+	def ReadInputFile(self, json):
+		for s in json["sensors"]:
+			self.sensors.append(Sensor(s["x"], s["y"], s["range"]))
+
+		for p in json["points"]:
+			self.points.append(Point(p["x"], p["y"]))
+			if p["critical"]:
+				self.critical_points.append(self.points[-1])
 		
+		if self.sensors is None or self.points is None:
+			raise Exception("No sensors or target points specified")
+
 		for target in self.points:
 			target.SetCoverage(self.sensors)
-
-		# let the 1st half of points be marked as "critical"
-		for i in range(0, int(len(self.points) / 2)):
-			self.critical_points.append(self.points[i])
 
 	def __SensorCoversCriticalPoint(self, sensorIndex):
 		for p in self.critical_points:
