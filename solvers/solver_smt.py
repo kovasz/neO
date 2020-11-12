@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from pysmt.shortcuts import Symbol, Int, Ite, Plus, Minus, Not, Or, LE, LT, GE, GT, to_smtlib
-from pysmt.shortcuts import Solver	
+from pysmt.shortcuts import Symbol, Int, Ite, Plus, Minus, Times, LE, LT, GE, GT, Or, Not, Iff, to_smtlib
+from pysmt.shortcuts import Solver
 
 from enum import Enum
 
@@ -15,7 +15,7 @@ class SmtSolvers(Enum):
 	MathSAT = 'msat'
 	CVC4 = 'cvc4'
 	Yices = 'yices'
-	Boolector = 'btor'
+	# Boolector = 'btor'
 
 class SmtSolver(solvers.solver.Solver):
 	def __init__(self, smtSolverType, dumpFileName = None):
@@ -48,12 +48,14 @@ class SmtSolver(solvers.solver.Solver):
 
 		newVars = [i for i in range(cntVars + 1, cntVars + numVars + 1)]
 		
-		self.vars += [Symbol("w{:d}".format(v)) for v in newVars]
+		self.vars += [Symbol("v{:d}".format(v)) for v in newVars]
 
 		if self.dumpFile:
 			for v in self.vars[cntVars:]:
 				self.dumpFile.write("(declare-fun {} () {})".format(v.symbol_name(), v.symbol_type()))
 		
+		return newVars
+
 		return newVars
 
 	def getVar(self, lit):
@@ -82,28 +84,41 @@ class SmtSolver(solvers.solver.Solver):
 		self.cntConstraints += 1
 		logging.debug("Constraint #{:d}:   clause {}".format(self.cntConstraints, lits))
 
-	def addConstraint(self, lits, relation, bound):
-		expr = Plus([self.boolToInt(l) for l in lits])
-
-		if relation == Relations.LessOrEqual:
-			expr = LE(expr, Int(bound))
-		elif relation == Relations.Less:
-			expr = LT(expr, Int(bound))
-		elif relation == Relations.GreaterOrEqual:
-			expr = GE(expr, Int(bound))
-		elif relation == Relations.Greater:
-			expr = GT(expr, Int(bound))
+	def addConstraint(self, constraint):
+		if constraint.weights is None:
+			lits = [self.boolToInt(l) for l in constraint.lits]
 		else:
-			raise Exception("Undefined value for a relation: {}".format(relation))
+			lits = []
+			for i in range(len(constraint.lits)):
+				if constraint.weights[i] == 1:
+					lits.append(self.boolToInt(constraint.lits[i]))
+				elif constraint.weights[i] > 1:
+					lits.append(Times(Int(constraint.weights[i]), self.boolToInt(constraint.lits[i])))
 
+		expr = Plus(lits)
+
+		if constraint.relation == Relations.LessOrEqual:
+			expr = LE(expr, Int(constraint.bound))
+		elif constraint.relation == Relations.Less:
+			expr = LT(expr, Int(constraint.bound))
+		elif constraint.relation == Relations.GreaterOrEqual:
+			expr = GE(expr, Int(constraint.bound))
+		elif constraint.relation == Relations.Greater:
+			expr = GT(expr, Int(constraint.bound))
+		else:
+			raise Exception("Undefined value for a relation: {}".format(constraint.relation))
+
+		if constraint.boolLit:
+			expr = Iff(expr, self.getLit(constraint.boolLit))
 		self.solver.add_assertion(expr)
 		
 		if self.dumpFile:
 			self.dumpFile.write("(assert {})".format(to_smtlib(expr, daggify = False)))
 
 		self.cntConstraints += 1
-		logging.debug("Constraint #{:d}:   {} {} {:d}".format(self.cntConstraints,
-			lits, RelationOps[relation], bound))
+		logging.debug("Constraint #{:d}:   {}   {}".format(self.cntConstraints,
+			"{:d}   <=>".format(constraint.boolLit) if constraint.boolLit else "",
+			expr))
 
 	def solve(self):
 		if self.dumpFile:
