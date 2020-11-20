@@ -9,7 +9,9 @@ from time import time
 from sys import stdout, exit
 from math import pow, sqrt, ceil
 import numpy
+numpy.warnings.filterwarnings('ignore', category=numpy.VisibleDeprecationWarning)
 import logging
+logging.captureWarnings(True)
 
 from models.model1 import WsnModel1
 from models.model2 import WsnModel2
