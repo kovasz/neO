@@ -106,6 +106,7 @@ class OrSolver(Solver):
 		bound -- upper bound on the RHS of the constraint
 
 		boolLit -- Boolean literal that is set to be equivalent with the constraint (undefined by default)
+		boolLit =>  lits*weights <= bound
 		"""
 
         if weights is None:
@@ -123,7 +124,8 @@ class OrSolver(Solver):
 
         self.cntConstraints += 1
 
-    # logging.debug("Constraint #{:d}:   {}".format(self.cntConstraints, constraint))
+        logging.debug("Constraint #{:d}:   {} <= {}".format(self.cntConstraints, "+".join(
+            ["{}*{}".format(weights[i], lits[i]) for i in range(len(lits))]), bound))
 
     def solve(self):
         res = self.solver.Solve()
