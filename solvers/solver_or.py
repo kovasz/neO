@@ -29,7 +29,6 @@ class OrSolver(Solver):
 		orSolverType -- type of the OR solver to instantiate
 		"""
 
-        print("SOLVERTYPE: {}".format(orSolverType.value))
         self.solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(name = orSolverType.value, solver_id = orSolverType.value)
         # self.model.verbose = 0
         self.vars = []
