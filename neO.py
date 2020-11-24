@@ -194,7 +194,7 @@ def runSolver(args):
         solver = MipSolver(mipSolverType=solverType)
     elif solverType in OrSolvers:
         solver = OrSolver(orSolverType=solverType)
-    elif cpSolverType:
+    elif solverType in CpSolvers:
         solver = CpSat()
 
     logging.info("{} starts encoding WSN...".format(solverType))
