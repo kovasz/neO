@@ -44,7 +44,7 @@ class CpSat(Solver):
         if lit > 0:
             return self.getVar(lit)
         else:
-            return 1 - self.getVar(lit)
+            return self.getVar(lit).Not()
 
     def addClause(self, lits):
         self.model.AddBoolOr(lits)
@@ -60,7 +60,7 @@ class CpSat(Solver):
             weights = constraint.weights
         else:
             weights = [1 for _ in constraint.lits]
-        """
+
         indicator = constraint.boolLit
         lhs = sum(weights[i] * self.getLit(constraint.lits[i]) for i in range(len(constraint.lits)))
         if constraint.relation == Relations.LessOrEqual:
@@ -75,14 +75,13 @@ class CpSat(Solver):
             raise Exception("Undefined value for a relation: {}".format(constraint.relation))
 
         if indicator:
-            self.model.Add(constraint).OnlyEnforceIf(
-                self.getVar(indicator) if indicator > 0 else self.getVar(indicator).Not())
+            self.model.Add(constraint).OnlyEnforceIf(self.getLit(indicator))
         else:
             self.model.Add(constraint)
 
         self.cntConstraints += 1
-        """
 
+        """
         # With atmost constraint only:
         if constraint.relation == Relations.LessOrEqual:
             return self.__atmost(constraint.lits, weights, constraint.bound, constraint.boolLit)
@@ -96,6 +95,7 @@ class CpSat(Solver):
                                  constraint.boolLit)
         else:
             raise Exception("Undefined value for a relation: {}".format(constraint.relation))
+        """
 
     def addConstraint(self, constraint):
         self.__addConstraint(constraint)
@@ -146,12 +146,12 @@ class CpSat(Solver):
             logging.warning("CP-SAT solver stopped!")
         logging.error("Simplex methods terminated with unexpected status: {}".format(res))
 
-    def get_model(self, var):
+    def get_model(self, lit):
         assert self.model
 
-        if not var:
+        if not lit:
             return None
-        elif isinstance(var, list):
-            return [self.get_model(v) for v in var]
+        elif isinstance(lit, list):
+            return [self.get_model(l) for l in lit]
         else:
-            return self.solver.Value(var)
+            return self.solver.Value(self.getLit(lit))
