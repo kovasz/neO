@@ -29,7 +29,7 @@ class OrSolver(Solver):
 		orSolverType -- type of the OR solver to instantiate
 		"""
 
-        self.solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(name = orSolverType.value, solver_id = orSolverType.value)
+        self.solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(orSolverType.value)
         # self.model.verbose = 0
         self.vars = []
         self.cntConstraints = 0
