@@ -106,11 +106,11 @@ class Model(object):
 
             if plot:
                 if i <= number_of_targets / 2:
-                    self.fig.gca().add_artist(pl.Circle((x, y), 4, color="yellow", fill=True))
-                    self.sensor_and_target_graph.nodes[number_of_sensors + i]['category'] = 1
-                else:
-                    self.fig.gca().add_artist(pl.Circle((x, y), 4, color="green", fill=True))
+                    # self.fig.gca().add_artist(pl.Circle((x, y), 4, color="yellow", fill=True))
                     self.sensor_and_target_graph.nodes[number_of_sensors + i]['category'] = 2
+                else:
+                    # self.fig.gca().add_artist(pl.Circle((x, y), 4, color="green", fill=True))
+                    self.sensor_and_target_graph.nodes[number_of_sensors + i]['category'] = 1
 
         for i in range(0, int(number_of_targets / 2)):
             self.critical_points.append(self.targets[i])
@@ -452,7 +452,7 @@ for sensor in range(1, number_of_sensors + 1):
 # Output directory
 if not os.path.exists("./out"):
     os.makedirs("./out")
-out_dir = "./out/{}/".format(datetime.now().strftime("%m-%d-%Y_%H:%M:%S"))
+out_dir = "./out/{}/".format(datetime.now().strftime("%m-%d-%Y_%H-%M-%S"))
 os.makedirs(out_dir)
 
 if args.model_1:
