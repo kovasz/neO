@@ -47,7 +47,7 @@ class CpSat(Solver):
             return self.getVar(lit).Not()
 
     def addClause(self, lits):
-        self.model.AddBoolOr(lits)
+        self.model.AddBoolOr(self.getLit(lits[i]) for i in range(len(lits)))
 
         self.cntConstraints += 1
 
@@ -122,17 +122,18 @@ class CpSat(Solver):
         """
 
         lhs = sum(weights[i] * self.getLit(lits[i]) for i in range(len(lits)))
-        constraint = lhs <= bound
 
         if boolLit:
-            self.model.Add(constraint).OnlyEnforceIf(
-                self.getLit(boolLit) if boolLit > 0 else self.getLit(-boolLit).Not())
-        else:
-            self.model.Add(constraint)
+            lhs = lhs + (sum(weights) - bound) * self.getLit(boolLit)
+            bound = sum(weights)
+
+        constraint = lhs <= bound
+
+        self.model.Add(constraint)
 
         self.cntConstraints += 1
 
-    # logging.debug("Constraint #{:d}:   {}".format(self.cntConstraints, constraint))
+        # logging.debug("Constraint #{:d}:   {}".format(self.cntConstraints, constraint))
 
     def solve(self):
         res = self.solver.Solve(self.model)
