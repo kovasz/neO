@@ -196,9 +196,10 @@ class SatSolver(Solver):
 						encoding = self.cardEnc.value
 					)
 
-			equiv_lit = constraint.equiv_var
-			
-			if boolLit and not equiv_lit:
+#			equiv_lit = constraint.equiv_var
+#			if boolLit and not equiv_lit:
+
+			if boolLit:
 				cntLits = len(lits)
 				# lits += [boolLit for _ in range(cntLits - bound)]
 				self.__extendLits(lits, boolLit, cntLits - bound)

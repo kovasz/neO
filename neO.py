@@ -20,9 +20,10 @@ from solvers.card_enc_type import CardEncType, Relations, RelationOps
 from solvers.solver import SolverResult
 from solvers.solver_sat import SatSolver, SatSolvers
 from solvers.solver_smt import SmtSolver, SmtSolvers
-from solvers.solver_mip import MipSolver, MipSolvers
+# from solvers.solver_mip import MipSolver, MipSolvers
 from solvers.solver_or import OrSolver, OrSolvers
 from solvers.solver_cp import CpSat, CpSolvers
+from solvers.solver_gurobi import GurobiSolver, GurobiSolvers
 
 
 class SearchAlgorithms(Enum):
@@ -52,9 +53,10 @@ def SearchOptimumBinary(wsnModel, lowerbound, upperbound, solvedMap):
             i = int((lowerbound + upperbound) / 2)
         else:
             i = i << 1
-        logging.info("i = {:d}".format(i))
+        logging.info("T = {:d}".format(i))
 
         SolverResult = DetermineSATOrUNSAT(wsnModel, lifetime=i)
+        if SolverResult is None: return None
         solvedMap[i] = SolverResult.isSAT
 
         logging.info("elapsed time = {:f}".format(time() - startTime))
@@ -71,9 +73,10 @@ def SearchOptimumBinary(wsnModel, lowerbound, upperbound, solvedMap):
 
     if lowerbound == upperbound:
         if solvedMap.get(lowerbound) == None:
-            logging.info("i = {:d}".format(lowerbound))
+            logging.info("T = {:d}".format(lowerbound))
 
             SolverResult = DetermineSATOrUNSAT(wsnModel, lifetime=lowerbound)
+            if SolverResult is None: return None
             solvedMap[lowerbound] = SolverResult.isSAT
 
             logging.info("elapsed time = {:f}".format(time() - startTime))
@@ -94,9 +97,10 @@ def SearchOptimumLinear(wsnModel, lowerbound):
     i = lowerbound
 
     while True:
-        logging.info("i = {:d}".format(i))
+        logging.info("T = {:d}".format(i))
 
         SATResult = DetermineSATOrUNSAT(wsnModel, lifetime=i, getModel=False)
+        if SATResult is None: return None
         solvedMap[i] = SATResult.isSAT
 
         logging.info("elapsed time = {:f}".format(time() - startTime))
@@ -125,9 +129,10 @@ def SearchOptimumRegLinear(wsnModel, lowerbound, upperbound, RegressionDegree=10
         elif i >= minimumUNSAT:
             i = minimumUNSAT - 1
 
-        logging.info("i = {:d}".format(i))
+        logging.info("T = {:d}".format(i))
 
         SATResult = DetermineSATOrUNSAT(wsnModel, lifetime=i, getModel=True)
+        if SATResult is None: return None
         solvedMap[i] = SATResult.isSAT
 
         logging.info("elapsed time = {:f}".format(time() - startTime))
@@ -190,12 +195,14 @@ def runSolver(args):
         solver = SatSolver(satSolverType=solverType, cardinalityEnc=cardinalityEnc, dumpFileName=dump_file)
     elif solverType in SmtSolvers:
         solver = SmtSolver(smtSolverType=solverType, dumpFileName=dump_file)
-    elif solverType in MipSolvers:
-        solver = MipSolver(mipSolverType=solverType)
+    # elif solverType in MipSolvers:
+    #     solver = MipSolver(mipSolverType=solverType)
     elif solverType in OrSolvers:
         solver = OrSolver(orSolverType=solverType)
     elif solverType in CpSolvers:
         solver = CpSat()
+    elif solverType in GurobiSolvers:
+        solver = GurobiSolver()
 
     logging.info("{} starts encoding WSN...".format(solverType))
     schedulingVars = wsnModel.EncodeWsnConstraints(lifetime=lifetime, solver=solver)
@@ -224,12 +231,14 @@ def DetermineSATOrUNSAT(wsnModel, lifetime, getModel=False):
         solverConfigs.extend([(solverType, wsnModel, cardEnc, lifetime, getModel) for solverType in satSolverType])
     if smtSolverType:
         solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in smtSolverType])
-    if mipSolverType:
-        solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in mipSolverType])
+    # if mipSolverType:
+    #     solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in mipSolverType])
     if orSolverType:
         solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in orSolverType])
     if cpSolverType:
         solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in cpSolverType])
+    if gurobiSolverType:
+        solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in gurobiSolverType])
 
     to = int(startTime + timeout - time()) if timeout else None
     pool = ProcessPool(len(solverConfigs), timeout=to)
@@ -272,24 +281,27 @@ parser.add_argument("-a", "--algorithm",
                     choices=["linear", "reglinear", "binary"],
                     help="which search algorithm to apply")
 parser.add_argument("--sat-solver",
-                    action="store", nargs='+', dest="sat_solver", default=["minicard"], type=str.lower,
+                    action="store", nargs='+', dest="sat_solver", default=["none"], type=str.lower,
                     choices=[s.value for s in list(SatSolvers)] + ["none"],
-                    help="the name of the SAT solvers (default: minicard)")
+                    help="name(s) of SAT solvers (default: none)")
 parser.add_argument("--smt-solver",
-                    action="store", nargs='+', dest="smt_solver", default=["z3"], type=str.lower,
+                    action="store", nargs='+', dest="smt_solver", default=["none"], type=str.lower,
                     choices=[s.value for s in list(SmtSolvers)] + ["none"],
-                    help="the name of the SMT solvers (default: z3)")
-parser.add_argument("--mip-solver",
-                    action="store", nargs='+', dest="mip_solver", default=["none"], type=str.lower,
-                    choices=[s.value for s in list(MipSolvers)] + ["none"],
-                    help="the name of the MIP solver (default: none)")
+                    help="name(s) of SMT solvers (default: none)")
+# parser.add_argument("--mip-solver",
+#                     action="store", nargs='+', dest="mip_solver", default=["none"], type=str.lower,
+#                     choices=[s.value for s in list(MipSolvers)] + ["none"],
+#                     help="the name of the MIP solver (default: none)")
 parser.add_argument("--or-solver",
                     action="store", nargs='+', dest="or_solver", default=["none"], type=str.lower,
                     choices=[s.value for s in list(OrSolvers)] + ["none"],
-                    help="the name of the OR solver (default: none)")
+                    help="name(s) of ILP solvers by OR-Tools (default: none)")
 parser.add_argument("--cp-solver",
                     action="store_true", dest="cp_solver",
-                    help="run CP-SAT on the problem")
+                    help="run CP-SAT")
+parser.add_argument("--gurobi-solver",
+                    action="store_true", dest="gurobi_solver",
+                    help="run Gurobi")
 parser.add_argument("--card-enc",
                     action="store", dest="card_enc", default="seqcounter", type=str.lower,
                     choices=[e.name for e in list(CardEncType)] + ["none"],
@@ -334,15 +346,17 @@ smtSolverType = []
 for args_solver in args.smt_solver:
     if args_solver != "none": smtSolverType.append(next(s for s in list(SmtSolvers) if s.value == args_solver))
 
-mipSolverType = []
-for args_solver in args.mip_solver:
-    if args_solver != "none": mipSolverType.append(next(s for s in list(MipSolvers) if s.value == args_solver))
+# mipSolverType = []
+# for args_solver in args.mip_solver:
+#     if args_solver != "none": mipSolverType.append(next(s for s in list(MipSolvers) if s.value == args_solver))
 
 orSolverType = []
 for args_solver in args.or_solver:
     if args_solver != "none": orSolverType.append(next(s for s in list(OrSolvers) if s.value == args_solver))
 
 cpSolverType = [CpSolvers.CPSat] if args.cp_solver else []
+
+gurobiSolverType = [GurobiSolvers.GurobiSolver] if args.gurobi_solver else []
 
 cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
 
@@ -357,6 +371,7 @@ if not os.path.isfile(inputFile):
     logging.error("Input file {} does not exist".format(inputFile))
     exit()
 
+logging.info("Parsing the file {}".format(inputFile))
 with open(inputFile) as file:
     jsonData = json.load(file)
 
@@ -366,21 +381,24 @@ wsnModel.ReadInputFile(jsonData)
 
 startTime = time()
 
+logging.info("T = 1")
 if DetermineSATOrUNSAT(wsnModel, lifetime=1).isSAT:
     print("SAT")
+    logging.info("elapsed time = {:f}".format(time() - startTime))
     print("Starting to search for the optimum...")
     optimum = Optimize(wsnModel)
     if optimum:
         print("OPTIMUM: {:d}".format(optimum))
         if bool_get_scheduling or bool_verify_scheduling:
             result = DetermineSATOrUNSAT(wsnModel, lifetime=optimum, getModel=True)
+            if bool_get_scheduling:
+                wsnModel.DisplayScheduling(schedulingModel=result.model)
             if bool_verify_scheduling:
                 wsnModel.VerifyScheduling(schedulingModel=result.model, lifetime=optimum)
                 print("Scheduling was successfully verified")
-            else:
-                wsnModel.DisplayScheduling(schedulingModel=result.model)
 else:
     print("UNSAT")
+    logging.info("elapsed time = {:f}".format(time() - startTime))
 
 print("ELAPSED TIME = {:f}".format(time() - startTime))
 

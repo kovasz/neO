@@ -56,8 +56,6 @@ class SmtSolver(solvers.solver.Solver):
 		
 		return newVars
 
-		return newVars
-
 	def getVar(self, lit):
 		return self.vars[abs(lit) - 1]
 

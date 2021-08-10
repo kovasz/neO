@@ -1,52 +1,33 @@
-# -*- coding: utf-8 -*-
-
-from ortools.linear_solver import pywraplp
-
-from enum import Enum
-
 import logging
+from enum import Enum
+from operator import neg
+from typing import Type
+
+from gurobipy import Model, GRB
 
 from solvers.card_enc_type import Relations
 from solvers.solver import Solver, Constraint
+import uuid
+
+class GurobiSolvers(Enum):
+    GurobiSolver = 'gurobi'
 
 
-class OrSolvers(Enum):
-    # mixed-integer programming solvers
-    CBC = 'cbc'
-    SCIP = 'scip'
-    Gurobi = 'gurobi'  # requires third-party installation and licence
-#    CPLEX = 'cplex'
-#    XPRESS = 'xpress'
-#     GLPK = 'glpk'
-#    BOP = 'bop'
-    # linear programming solves
-    # CLP = 'clp'
-    # GLOP = 'glop'
-
-class OrSolver(Solver):
-    def __init__(self, orSolverType):
-        """Initialize the solver
-
-		Parameters:
-
-		orSolverType -- type of the OR solver to instantiate
-		"""
-
-        self.solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(orSolverType.value)
-        # self.model.verbose = 0
+class GurobiSolver(Solver):
+    def __init__(self):
+        super().__init__()
+        self.model = Model()
+        self.model.setParam('OutputFlag', 0)
         self.vars = []
         self.cntConstraints = 0
-
-    def __del__(self):
-        """Delete the solver"""
-
-        del self.solver
 
     def generateVars(self, numVars):
         cntVars = len(self.vars)
         newVars = [i for i in range(cntVars + 1, cntVars + numVars + 1)]
 
-        self.vars += [self.solver.BoolVar("v{:d}".format(v)) for v in newVars]
+        self.vars += [self.model.addVar(vtype = GRB.BINARY, name = "v{:d}".format(v)) for v in newVars]
+
+#         self.model.update()
 
         return newVars
 
@@ -57,17 +38,18 @@ class OrSolver(Solver):
         if lit > 0:
             return self.getVar(lit)
         else:
-            return 1 - self.getVar(lit)
+            return - self.getVar(lit)
+#            return 1 - self.getVar(lit)
 
     def addClause(self, lits):
-        self.solver.Add(pywraplp.Solver.Sum(self.solver, (self.getLit(l) for l in lits)) >= 1)
+        self.model.addConstr(sum(self.getLit(l) for l in lits) >= 1)
 
         self.cntConstraints += 1
 
         logging.debug("Constraint #{:d}:   clause {}".format(self.cntConstraints, lits))
 
     def __addConstraint(self, constraint):
-        # logging.info(str(constraint))
+#        logging.info(str(constraint))
 
         if constraint.weights is not None:
             weights = constraint.weights
@@ -115,35 +97,56 @@ class OrSolver(Solver):
         if weights is None:
             weights = [1 for _ in lits]
 
+        offset = 0
+        for i in range(len(lits)):
+            if lits[i] < 0:
+                offset += weights[i]
+
         lhs = sum(weights[i] * self.getLit(lits[i]) for i in range(len(lits)))
+        bound -= offset
 
         if boolLit:
-            lhs = lhs + (sum(weights) - bound) * self.getLit(boolLit)
-            bound = sum(weights)
-
-        constraint = lhs <= bound
-
-        self.solver.Add(constraint)
+            self.model.addGenConstrIndicator(self.getVar(boolLit), boolLit > 0, lhs, GRB.LESS_EQUAL, bound)
+        else:
+            self.model.addConstr(lhs <= bound)
 
         self.cntConstraints += 1
 
-        logging.debug("Constraint #{:d}:   {} <= {}".format(self.cntConstraints, "+".join(
-            ["{}*{}".format(weights[i], lits[i]) for i in range(len(lits))]), bound))
+        logging.debug("Constraint #{:d}: {}   {} <= {}".format(self.cntConstraints,
+            "{} =>".format(boolLit) if boolLit else "",
+            "+".join(["{}*{}".format(weights[i], lits[i]) for i in range(len(lits))]),
+            bound))
+#        logging.debug(str(constraint))
 
     def solve(self):
-        res = self.solver.Solve()
-        if res == self.solver.OPTIMAL or res == self.solver.FEASIBLE:
+        """Start the solving process
+
+        Returns: True iff satisfiable
+        """
+
+        self.model.optimize()
+        logging.debug(f'Solver status is {self.model.status}')
+        if self.model.status == GRB.OPTIMAL:
             return True
-        elif res == self.solver.NOT_SOLVED or res == self.solver.INFEASIBLE or res == self.solver.ABNORMAL:
-            return False
-        logging.error("Simplex methods terminated with unexpected status: {}".format(res))
+        return False
 
     def get_model(self, var):
-        assert self.solver
+        """Get the satisfying model for certain vars
+
+        Parameters:
+
+        vars -- a list of vars
+
+        Returns: a list of assignments to vars
+        """
+
+        assert(self.model)
 
         if not var:
             return None
         elif isinstance(var, list):
             return [self.get_model(v) for v in var]
         else:
-            return self.getLit(var).solution_value()
+            return self.model.getVarByName(self.getVar(var).varName).x
+            return self.getVar(var).x
+#            return self.model.getVarByName(self.getVar(var).varName).x == 1

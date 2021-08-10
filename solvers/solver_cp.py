@@ -47,7 +47,7 @@ class CpSat(Solver):
             return self.getVar(lit).Not()
 
     def addClause(self, lits):
-        self.model.AddBoolOr(lits)
+        self.model.AddBoolOr([self.getLit(l) for l in lits])
 
         self.cntConstraints += 1
 
