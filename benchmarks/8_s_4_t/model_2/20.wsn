@@ -1,0 +1,101 @@
+{
+    "version": 2,
+    "sensors": [
+        {
+            "x": 15,
+            "y": 27,
+            "power": 316
+        },
+        {
+            "x": 55,
+            "y": 129,
+            "power": 256
+        },
+        {
+            "x": 39,
+            "y": 47,
+            "power": 488
+        },
+        {
+            "x": 5,
+            "y": 119,
+            "power": 425
+        },
+        {
+            "x": 65,
+            "y": 135,
+            "power": 281
+        },
+        {
+            "x": 137,
+            "y": 53,
+            "power": 337
+        },
+        {
+            "x": 23,
+            "y": 69,
+            "power": 377
+        },
+        {
+            "x": 128,
+            "y": 129,
+            "power": 409
+        }
+    ],
+    "points": [
+        {
+            "x": 94,
+            "y": 72,
+            "critical": true
+        },
+        {
+            "x": 50,
+            "y": 129,
+            "critical": true
+        },
+        {
+            "x": 84,
+            "y": 79,
+            "critical": false
+        },
+        {
+            "x": 103,
+            "y": 104,
+            "critical": false
+        }
+    ],
+    "levels": [
+        {
+            "power": 24,
+            "range": 7
+        },
+        {
+            "power": 28,
+            "range": 25
+        },
+        {
+            "power": 31,
+            "range": 41
+        },
+        {
+            "power": 35,
+            "range": 58
+        },
+        {
+            "power": 39,
+            "range": 75
+        },
+        {
+            "power": 42,
+            "range": 92
+        },
+        {
+            "power": 46,
+            "range": 109
+        },
+        {
+            "power": 48,
+            "range": 120
+        }
+    ]
+}
