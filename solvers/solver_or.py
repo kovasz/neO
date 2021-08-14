@@ -90,14 +90,14 @@ class OrSolver(Solver):
     def addConstraint(self, constraint):
         self.__addConstraint(constraint)
 
-        # if constraint.boolLit is not None:
-        #     self.__addConstraint(Constraint(
-        #         lits=constraint.lits,
-        #         weights=constraint.weights,
-        #         relation=Relations(-constraint.relation.value),
-        #         bound=constraint.bound,
-        #         boolLit=-constraint.boolLit
-        #     ))
+        if constraint.boolLit is not None:
+            self.__addConstraint(Constraint(
+                lits=constraint.lits,
+                weights=constraint.weights,
+                relation=Relations(-constraint.relation.value),
+                bound=constraint.bound,
+                boolLit=-constraint.boolLit
+            ))
 
     def __atmost(self, lits, weights, bound, boolLit=0):
         """Add an "AtMost", i.e., less-or-equal cardinality constraint to the solver

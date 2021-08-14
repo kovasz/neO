@@ -140,6 +140,11 @@ class WsnModel2(WsnModel):
 			for sensorIndex in range(len(self.sensors)):
 				for pointIndex in range(len(self.critical_points)):
 					for time in range(lifetime - self.limit_crit_ON):
+						# solver.addConstraint(Constraint(
+						# 	lits = [coverageVars[sensorIndex][pointIndex][time + h] for h in range(self.limit_crit_ON + 1)],
+						# 	relation = Relations.LessOrEqual,
+						# 	bound = self.limit_crit_ON
+						# ))
 						solver.addClause([-coverageVars[sensorIndex][pointIndex][time + h] for h in range(self.limit_crit_ON + 1)])
 
 		return schedulingVars

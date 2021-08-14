@@ -42,7 +42,12 @@ class GurobiSolver(Solver):
 #            return 1 - self.getVar(lit)
 
     def addClause(self, lits):
-        self.model.addConstr(sum(self.getLit(l) for l in lits) >= 1)
+        offset = 0
+        for i in range(len(lits)):
+            if lits[i] < 0:
+                offset += 1
+
+        self.model.addConstr(sum(self.getLit(l) for l in lits) >= 1 - offset)
 
         self.cntConstraints += 1
 
@@ -72,14 +77,14 @@ class GurobiSolver(Solver):
     def addConstraint(self, constraint):
         self.__addConstraint(constraint)
 
-        # if constraint.boolLit is not None:
-        #     self.__addConstraint(Constraint(
-        #         lits=constraint.lits,
-        #         weights=constraint.weights,
-        #         relation=Relations(-constraint.relation.value),
-        #         bound=constraint.bound,
-        #         boolLit=-constraint.boolLit
-        #     ))
+        if constraint.boolLit is not None:
+            self.__addConstraint(Constraint(
+                lits=constraint.lits,
+                weights=constraint.weights,
+                relation=Relations(-constraint.relation.value),
+                bound=constraint.bound,
+                boolLit=-constraint.boolLit
+            ))
 
     def __atmost(self, lits, weights, bound, boolLit=0):
         """Add an "AtMost", i.e., less-or-equal cardinality constraint to the solver
