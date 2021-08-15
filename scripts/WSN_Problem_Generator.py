@@ -232,7 +232,7 @@ class Model1(Model):
             if self.fix_scope:
                 scope = fix_scope
             else:
-                scope = DISCRETE_SCOPES[rnd.randrange(0, 7)]
+                scope = DISCRETE_SCOPES[rnd.randrange(len(DISCRETE_SCOPES))]
 
             sensor = {
                 "x": x,

@@ -5,13 +5,22 @@ neO is able not only to interface to several solvers such as MiniSat, Glucose, M
 
 ## License
 
-VerBiNe is under GPL license, check out the COPYING file.
+neO is under GPL license, check out the COPYING file.
 In essence you can not distribute a program that uses this version unless you make your program available under GPL as well. 
 If you need another license in order to use our software as part of a program which is not going to be distributed under GPL, please contact
 Gergely Kovasznai <kovasznai.gergely@uni-eszterhazy.hu>.
 
 If you want neO to execute Gurobi as an ILP solver, you need to purchase a Gurobi license, which is free for academics and 
 students: https://www.gurobi.com/academia/academic-program-and-licenses/
+
+## Reference
+
+Gergely Kovásznai, Krisztián Gajdár, Laura Kovács.
+"Portfolio SAT and SMT Solving of Cardinality Constraints in Sensor Network Optimization".
+In ''21st International Symposium on Symbolic and Numeric Algorithms for Scientific Computing (SYNASC)'',
+pp. 85-91.
+IEEE, 2019.
+
 
 ## Installation
 
