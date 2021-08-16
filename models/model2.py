@@ -206,7 +206,7 @@ class WsnModel2(WsnModel):
 			print("Sensor #{:d}:\t".format(sensor), end = "")
 			for time in range(len(schedulingModel[sensor])):
 				try:
-					print("{:d}->{:d}\t".format(time, next(i + 1 for i in range(len(schedulingModel[sensor][time])) if schedulingModel[sensor][time][i] > 0)), end = "")
+					print("{:d}@{:d}\t".format(time, next(i + 1 for i in range(len(schedulingModel[sensor][time])) if schedulingModel[sensor][time][i] > 0)), end = "")
 				except StopIteration:
 					print("\t", end = "")
 			print()

@@ -415,6 +415,14 @@ argument_check()
 # Constants
 DISCRETE_SCOPES = [120, 109, 92, 75, 58, 41, 25, 7]
 POWER_LEVELS = [
+    # {"power": 8, "range": 7},
+    # {"power": 10, "range": 25},
+    # {"power": 11, "range": 41},
+    # {"power": 12, "range": 58},
+    # {"power": 14, "range": 75},
+    # {"power": 15, "range": 92},
+    # {"power": 16, "range": 109},
+    # {"power": 17, "range": 120}
     {"power": 24, "range": 7},
     {"power": 28, "range": 25},
     {"power": 31, "range": 41},
