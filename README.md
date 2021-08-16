@@ -17,7 +17,7 @@ students: https://www.gurobi.com/academia/academic-program-and-licenses/
 
 Gergely Kovásznai, Krisztián Gajdár, Laura Kovács.
 "Portfolio SAT and SMT Solving of Cardinality Constraints in Sensor Network Optimization".
-In ''21st International Symposium on Symbolic and Numeric Algorithms for Scientific Computing (SYNASC)'',
+In *21st International Symposium on Symbolic and Numeric Algorithms for Scientific Computing (SYNASC)*,
 pp. 85-91.
 IEEE, 2019.
 
