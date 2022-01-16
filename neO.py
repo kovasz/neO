@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# allow .so module file to be imported as module: this folder needed to be added to the list of
+# directories that is searched for Python packages.
+from sys import path
+path.append("./solvers")
+
 import argparse
 from enum import Enum
 import glob
@@ -24,6 +29,7 @@ from solvers.solver_smt import SmtSolver, SmtSolvers
 from solvers.solver_or import OrSolver, OrSolvers
 from solvers.solver_cp import CpSat, CpSolvers
 from solvers.solver_gurobi import GurobiSolver, GurobiSolvers
+from solvers.solver_minisatcs import MinisatcsSolver, MinisatcsSolvers
 
 
 class SearchAlgorithms(Enum):
@@ -203,6 +209,8 @@ def runSolver(args):
         solver = CpSat()
     elif solverType in GurobiSolvers:
         solver = GurobiSolver()
+    elif solverType in MinisatcsSolvers:
+        solver = MinisatcsSolver()
 
     logging.info("{} starts encoding WSN...".format(solverType))
     schedulingVars = wsnModel.EncodeWsnConstraints(lifetime=lifetime, solver=solver)
@@ -239,8 +247,10 @@ def DetermineSATOrUNSAT(wsnModel, lifetime, getModel=False):
         solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in cpSolverType])
     if gurobiSolverType:
         solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in gurobiSolverType])
-
+    if minisatcsSolverType:
+        solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in minisatcsSolverType])
     to = int(startTime + timeout - time()) if timeout else None
+
     pool = ProcessPool(len(solverConfigs), timeout=to)
 
     result = None
@@ -302,6 +312,9 @@ parser.add_argument("--cp-solver",
 parser.add_argument("--gurobi-solver",
                     action="store_true", dest="gurobi_solver",
                     help="run Gurobi")
+parser.add_argument("--minisatcs-solver",
+                    action="store_true", dest="minisatcs_solver",
+                    help="run Gurobi")
 parser.add_argument("--card-enc",
                     action="store", dest="card_enc", default="seqcounter", type=str.lower,
                     choices=[e.name for e in list(CardEncType)] + ["none"],
@@ -358,6 +371,8 @@ cpSolverType = [CpSolvers.CPSat] if args.cp_solver else []
 
 gurobiSolverType = [GurobiSolvers.GurobiSolver] if args.gurobi_solver else []
 
+minisatcsSolverType = [MinisatcsSolvers.Minisatcs] if args.minisatcs_solver else []
+
 cardEnc = next(e for e in list(CardEncType) if e.name == args.card_enc) if args.card_enc != "none" else None
 
 dump_file = args.dump_file
@@ -387,15 +402,15 @@ if DetermineSATOrUNSAT(wsnModel, lifetime=1).isSAT:
     logging.info("elapsed time = {:f}".format(time() - startTime))
     print("Starting to search for the optimum...")
     optimum = Optimize(wsnModel)
-    if optimum:
-        print("OPTIMUM: {:d}".format(optimum))
-        if bool_get_scheduling or bool_verify_scheduling:
-            result = DetermineSATOrUNSAT(wsnModel, lifetime=optimum, getModel=True)
-            if bool_get_scheduling:
-                wsnModel.DisplayScheduling(schedulingModel=result.model)
-            if bool_verify_scheduling:
-                wsnModel.VerifyScheduling(schedulingModel=result.model, lifetime=optimum)
-                print("Scheduling was successfully verified")
+    #if optimum:
+        # print("OPTIMUM: {:d}".format(optimum))
+        # if bool_get_scheduling or bool_verify_scheduling:
+        #     result = DetermineSATOrUNSAT(wsnModel, lifetime=optimum, getModel=True)
+        #     if bool_get_scheduling:
+        #         wsnModel.DisplayScheduling(schedulingModel=result.model)
+        #     if bool_verify_scheduling:
+        #         wsnModel.VerifyScheduling(schedulingModel=result.model, lifetime=optimum)
+        #         print("Scheduling was successfully verified")
 else:
     print("UNSAT")
     logging.info("elapsed time = {:f}".format(time() - startTime))
