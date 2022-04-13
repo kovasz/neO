@@ -248,7 +248,7 @@ def DetermineSATOrUNSAT(wsnModel, lifetime, getModel=False):
     if gurobiSolverType:
         solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in gurobiSolverType])
     if minisatcsSolverType:
-        solverConfigs.extend([(solverType, wsnModel, None, lifetime, getModel) for solverType in minisatcsSolverType])
+        solverConfigs.extend([(solverType, wsnModel, cardEnc, lifetime, getModel) for solverType in minisatcsSolverType])
     to = int(startTime + timeout - time()) if timeout else None
 
     pool = ProcessPool(len(solverConfigs), timeout=to)
@@ -314,7 +314,7 @@ parser.add_argument("--gurobi-solver",
                     help="run Gurobi")
 parser.add_argument("--minisatcs-solver",
                     action="store_true", dest="minisatcs_solver",
-                    help="run Gurobi")
+                    help="run MiniSatCS")
 parser.add_argument("--card-enc",
                     action="store", dest="card_enc", default="seqcounter", type=str.lower,
                     choices=[e.name for e in list(CardEncType)] + ["none"],
@@ -402,15 +402,15 @@ if DetermineSATOrUNSAT(wsnModel, lifetime=1).isSAT:
     logging.info("elapsed time = {:f}".format(time() - startTime))
     print("Starting to search for the optimum...")
     optimum = Optimize(wsnModel)
-    #if optimum:
-        # print("OPTIMUM: {:d}".format(optimum))
-        # if bool_get_scheduling or bool_verify_scheduling:
-        #     result = DetermineSATOrUNSAT(wsnModel, lifetime=optimum, getModel=True)
-        #     if bool_get_scheduling:
-        #         wsnModel.DisplayScheduling(schedulingModel=result.model)
-        #     if bool_verify_scheduling:
-        #         wsnModel.VerifyScheduling(schedulingModel=result.model, lifetime=optimum)
-        #         print("Scheduling was successfully verified")
+    if optimum:
+        print("OPTIMUM: {:d}".format(optimum))
+        if bool_get_scheduling or bool_verify_scheduling:
+            result = DetermineSATOrUNSAT(wsnModel, lifetime=optimum, getModel=True)
+            if bool_get_scheduling:
+                wsnModel.DisplayScheduling(schedulingModel=result.model)
+            if bool_verify_scheduling:
+                wsnModel.VerifyScheduling(schedulingModel=result.model, lifetime=optimum)
+                print("Scheduling was successfully verified")
 else:
     print("UNSAT")
     logging.info("elapsed time = {:f}".format(time() - startTime))
