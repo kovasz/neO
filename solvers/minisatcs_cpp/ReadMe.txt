@@ -1,11 +1,5 @@
-To compile run inside the build folder(!) first 
+To compile, run inside the build folder(!)
 
-	bash crun.sh
+	bash run.sh
 
-Than you can run
-
-	bash mrun.sh
-
-to do a complete compile.
-
-Note, that you might need to edit the crun.sh file to change the folder name of cmake.
+Note, that you might need to edit the file to change the folder name of cmake.
