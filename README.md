@@ -61,6 +61,13 @@ Command-line arguments regarding the results:
 
 <!-- To statically compile into an executable: build.sh -->
 
+## Benchmarks
+
+Benchmarks are provided in the folder <code>benchmarks</code>, in JSON format. The naming of subfolders corresponds to the number of sensor nodes and of target points; for instance, <code>50_s_20_t</code> uses 50 sensor nodes and 20 target points.
+
+The <code>version</code> JSON attribute corresponds to the WSN model to be used:
+* <code>"version": 1</code>: WSN model with fixed sensing ranges
+* <code>"version": 2</code>: WSN model with adaptive sensing ranges
 
 
 Gergely Kovasznai, Eszterházy Károly University, Eger, Hungary, 2019.
