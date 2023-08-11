@@ -69,6 +69,8 @@ The <code>version</code> JSON attribute corresponds to the WSN model to be used:
 * <code>"version": 1</code>: WSN model with fixed sensing ranges [[1]](#1)
 * <code>"version": 2</code>: WSN model with adaptive sensing ranges
 
+The ending <code>fix</code> of folder names corresponds to that sensing ranges and power settings are homogenous, respectively. Otherwise, they are heterogenous.
+
 ## References
 <a id="1">[1]</a> 
 G. Kovásznai, K. Gajdár, L. Kovács (2019). 
