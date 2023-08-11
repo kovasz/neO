@@ -66,8 +66,15 @@ Command-line arguments regarding the results:
 Benchmarks are provided in the folder <code>benchmarks</code>, in JSON format. The naming of subfolders corresponds to the number of sensor nodes and of target points; for instance, <code>50_s_20_t</code> uses 50 sensor nodes and 20 target points.
 
 The <code>version</code> JSON attribute corresponds to the WSN model to be used:
-* <code>"version": 1</code>: WSN model with fixed sensing ranges
+* <code>"version": 1</code>: WSN model with fixed sensing ranges [[1]](#1)
 * <code>"version": 2</code>: WSN model with adaptive sensing ranges
+
+## References
+<a id="1">[1]</a> 
+G. Kovásznai, K. Gajdár, L. Kovács (2019). 
+Portfolio SAT and SMT Solving of Cardinality Constraints in Sensor Network Optimization. 
+2019 21st International Symposium on Symbolic and Numeric Algorithms for Scientific Computing (SYNASC), 85-91.
+[https://doi.org/10.1109/SYNASC49474.2019.00021]
 
 
 Gergely Kovasznai, Eszterházy Károly University, Eger, Hungary, 2019.
